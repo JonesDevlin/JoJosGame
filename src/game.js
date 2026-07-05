@@ -65,8 +65,7 @@ function create() {
     // Idle breathing tweens
     this.tweens.add({
         targets: [teacher, ...pokemons],
-        scaleY: '*=1.05',
-        scaleX: '*=1.02',
+        y: '-=10', // Hover effect instead of scaling to avoid NaN bounds
         duration: 1000,
         yoyo: true,
         repeat: -1,
@@ -164,34 +163,20 @@ function interactTeacher(playerSprite, teacherSprite) {
     } else {
         showDialogue("Professor: Amazing! You completed the Pokedex! You pass!");
     }
-    
-    lastInteract = Date.now();
-    
-    // Bounce player back to prevent re-triggering immediately
-    if (playerSprite.y < teacherSprite.y) {
-        playerSprite.y -= 20;
-    } else {
-        playerSprite.y += 20;
-    }
 }
 
 function interactPokemon(playerSprite, pokemon) {
     if (dialogueActive || puzzleActive) return;
+    
+    let now = Date.now();
+    if (now - lastInteract < 1000) return;
 
     if (!hasPokedex) {
-        let now = Date.now();
-        if (now - lastInteract < 2000) return;
         showDialogue("You need a Pokedex from the Professor first!");
-        lastInteract = Date.now();
-        if (playerSprite.y < pokemon.y) playerSprite.y -= 20;
-        else playerSprite.y += 20;
         return;
     }
 
     if (pokemon.caught) return;
-    
-    if (playerSprite.y < pokemon.y) playerSprite.y -= 20;
-    else playerSprite.y += 20; // Bounce to un-collide
     
     showPuzzle(pokemon);
 }
@@ -215,6 +200,7 @@ function showDialogue(text) {
 
 function hideDialogue() {
     dialogueActive = false;
+    lastInteract = Date.now(); // reset cooldown WHEN they close it
     document.getElementById('dialogue-ui').classList.add('hidden');
 }
 
@@ -268,6 +254,7 @@ function solvePuzzle(isCorrect) {
 function hidePuzzle() {
     puzzleActive = false;
     currentPokemon = null;
+    lastInteract = Date.now(); // reset cooldown WHEN they close it
     document.getElementById('puzzle-ui').classList.add('hidden');
     if(player) {
         player.setVelocity(0,0);
