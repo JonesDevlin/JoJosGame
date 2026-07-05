@@ -21,6 +21,7 @@ const config = {
 const game = new Phaser.Game(config);
 let player;
 let cursors;
+let interactKey;
 let teacher;
 let pokemons = [];
 let hasPokedex = false;
@@ -31,12 +32,12 @@ let dialogueActive = false;
 let currentPokemon = null;
 
 function preload() {
-    this.load.image('bg', 'assets/classroom_bg.jpg');
-    this.load.spritesheet('player', 'assets/player_anim.png', { frameWidth: 16, frameHeight: 16 });
-    this.load.image('teacher', 'assets/teacher.png');
-    this.load.image('pokemon1', 'assets/pokemon1.png');
-    this.load.image('pokemon2', 'assets/pokemon2.png');
-    this.load.image('pokemon3', 'assets/pokemon3.png');
+    this.load.image('bg', 'assets/classroom_bg.jpg?v=3');
+    this.load.spritesheet('player', 'assets/player_anim.png?v=3', { frameWidth: 16, frameHeight: 16 });
+    this.load.image('teacher', 'assets/teacher.png?v=3');
+    this.load.image('pokemon1', 'assets/pokemon1.png?v=3');
+    this.load.image('pokemon2', 'assets/pokemon2.png?v=3');
+    this.load.image('pokemon3', 'assets/pokemon3.png?v=3');
 }
 
 function create() {
@@ -102,14 +103,15 @@ function create() {
         repeat: -1
     });
 
-    // Collisions and interactions
-    this.physics.add.collider(player, teacher, interactTeacher, null, this);
+    // Collisions (Solid barriers)
+    this.physics.add.collider(player, teacher);
     pokemons.forEach(p => {
-        this.physics.add.collider(player, p, interactPokemon, null, this);
+        this.physics.add.collider(player, p);
     });
 
     // Input
     cursors = this.input.keyboard.createCursorKeys();
+    interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
     // Setup UI buttons
     document.getElementById('puzzle-close').addEventListener('click', () => {
@@ -145,11 +147,24 @@ function update() {
     } else {
         player.anims.stop();
     }
+
+    // Interaction with Spacebar
+    if (Phaser.Input.Keyboard.JustDown(interactKey)) {
+        if (Phaser.Math.Distance.Between(player.x, player.y, teacher.x, teacher.y) < 80) {
+            interactTeacher();
+        } else {
+            pokemons.forEach(p => {
+                if (Phaser.Math.Distance.Between(player.x, player.y, p.x, p.y) < 80) {
+                    interactPokemon(p);
+                }
+            });
+        }
+    }
 }
 
 let lastInteract = 0;
 
-function interactTeacher(playerSprite, teacherSprite) {
+function interactTeacher() {
     if (dialogueActive || puzzleActive) return;
     
     let now = Date.now();
@@ -165,7 +180,7 @@ function interactTeacher(playerSprite, teacherSprite) {
     }
 }
 
-function interactPokemon(playerSprite, pokemon) {
+function interactPokemon(pokemon) {
     if (dialogueActive || puzzleActive) return;
     
     let now = Date.now();
