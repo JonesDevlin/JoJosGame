@@ -70,7 +70,7 @@ function create() {
 
     // Idle breathing tweens
     this.tweens.add({
-        targets: [player, teacher, ...pokemons],
+        targets: [teacher, ...pokemons], // Removed player so Y-axis physics work again
         y: '-=10', // Hover effect
         duration: 1000,
         yoyo: true,
@@ -116,7 +116,9 @@ function update() {
         player.setVelocityX(-speed);
     } else if (cursors.right.isDown) {
         player.setVelocityX(speed);
-    } else if (cursors.up.isDown) {
+    } 
+    
+    if (cursors.up.isDown) {
         player.setVelocityY(-speed);
     } else if (cursors.down.isDown) {
         player.setVelocityY(speed);
