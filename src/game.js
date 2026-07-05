@@ -26,6 +26,7 @@ let hasPokedex = false;
 let pokedexCount = 0;
 const totalPokemons = 3;
 let puzzleActive = false;
+let dialogueActive = false;
 let currentPokemon = null;
 
 function preload() {
@@ -78,10 +79,13 @@ function create() {
     document.getElementById('puzzle-close').addEventListener('click', () => {
         hidePuzzle();
     });
+    document.getElementById('dialogue-close').addEventListener('click', () => {
+        hideDialogue();
+    });
 }
 
 function update() {
-    if (puzzleActive) {
+    if (puzzleActive || dialogueActive) {
         player.setVelocity(0);
         return;
     }
@@ -104,38 +108,72 @@ function update() {
 
 let lastInteract = 0;
 
-function interactTeacher() {
+function interactTeacher(playerSprite, teacherSprite) {
+    if (dialogueActive || puzzleActive) return;
+    
     let now = Date.now();
     if (now - lastInteract < 1000) return;
-    lastInteract = now;
 
     if (!hasPokedex) {
         hasPokedex = true;
-        alert("Professor: Welcome to the Academy! Here is your Pokedex. Go make 3 Pokemon happy!");
+        showDialogue("Professor: Welcome to the Academy! Here is your Pokedex. Go make 3 Pokemon happy!");
     } else if (pokedexCount < totalPokemons) {
-        alert("Professor: You still have " + (totalPokemons - pokedexCount) + " Pokemon to catch.");
+        showDialogue("Professor: You still have " + (totalPokemons - pokedexCount) + " Pokemon to catch.");
     } else {
-        alert("Professor: Amazing! You completed the Pokedex! You pass!");
+        showDialogue("Professor: Amazing! You completed the Pokedex! You pass!");
     }
     
+    lastInteract = Date.now();
+    
     // Bounce player back to prevent re-triggering immediately
-    player.y += 20;
+    if (playerSprite.y < teacherSprite.y) {
+        playerSprite.y -= 20;
+    } else {
+        playerSprite.y += 20;
+    }
 }
 
 function interactPokemon(playerSprite, pokemon) {
+    if (dialogueActive || puzzleActive) return;
+
     if (!hasPokedex) {
         let now = Date.now();
         if (now - lastInteract < 2000) return;
-        lastInteract = now;
-        alert("You need a Pokedex from the Professor first!");
-        playerSprite.y -= 20;
+        showDialogue("You need a Pokedex from the Professor first!");
+        lastInteract = Date.now();
+        if (playerSprite.y < pokemon.y) playerSprite.y -= 20;
+        else playerSprite.y += 20;
         return;
     }
 
     if (pokemon.caught) return;
     
-    playerSprite.y -= 20; // Bounce to un-collide
+    if (playerSprite.y < pokemon.y) playerSprite.y -= 20;
+    else playerSprite.y += 20; // Bounce to un-collide
+    
     showPuzzle(pokemon);
+}
+
+function showDialogue(text) {
+    dialogueActive = true;
+    const ui = document.getElementById('dialogue-ui');
+    const textElement = document.getElementById('dialogue-text');
+    ui.classList.remove('hidden');
+    textElement.innerText = text;
+    
+    if(player) {
+        player.setVelocity(0, 0);
+        // Clear keyboard inputs to prevent drifting
+        cursors.left.reset();
+        cursors.right.reset();
+        cursors.up.reset();
+        cursors.down.reset();
+    }
+}
+
+function hideDialogue() {
+    dialogueActive = false;
+    document.getElementById('dialogue-ui').classList.add('hidden');
 }
 
 function showPuzzle(pokemon) {
@@ -174,14 +212,14 @@ function showPuzzle(pokemon) {
 
 function solvePuzzle(isCorrect) {
     if (isCorrect) {
-        alert("The Pokemon is happy! It was added to your Pokedex.");
         currentPokemon.caught = true;
         currentPokemon.setAlpha(0.5); // Make it translucent to indicate it's caught
         pokedexCount++;
         hidePuzzle();
+        showDialogue("The Pokemon is happy! It was added to your Pokedex.");
     } else {
-        alert("The Pokemon didn't like that...");
         hidePuzzle();
+        showDialogue("The Pokemon didn't like that...");
     }
 }
 
@@ -191,5 +229,9 @@ function hidePuzzle() {
     document.getElementById('puzzle-ui').classList.add('hidden');
     if(player) {
         player.setVelocity(0,0);
+        cursors.left.reset();
+        cursors.right.reset();
+        cursors.up.reset();
+        cursors.down.reset();
     }
 }
