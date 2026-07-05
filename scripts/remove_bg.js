@@ -9,7 +9,7 @@ function colorDistance(r1, g1, b1, r2, g2, b2) {
 }
 
 async function processImage(filename) {
-    if (!filename.endsWith('.jpg') || filename === 'classroom_bg.jpg' || filename === 'player.jpg') return;
+    if (!filename.endsWith('.jpg') || filename === 'classroom_bg.jpg') return;
     
     const inputPath = path.join(assetsDir, filename);
     const outputPath = path.join(assetsDir, filename.replace('.jpg', '.png'));

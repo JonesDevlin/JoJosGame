@@ -33,7 +33,7 @@ let currentPokemon = null;
 
 function preload() {
     this.load.image('bg', 'assets/classroom_bg.jpg?v=3');
-    this.load.spritesheet('player', 'assets/player_anim.png?v=3', { frameWidth: 16, frameHeight: 16 });
+    this.load.image('player', 'assets/player.png?v=4');
     this.load.image('teacher', 'assets/teacher.png?v=3');
     this.load.image('pokemon1', 'assets/pokemon1.png?v=3');
     this.load.image('pokemon2', 'assets/pokemon2.png?v=3');
@@ -63,44 +63,19 @@ function create() {
         p.caught = false;
     });
 
-    // Idle breathing tweens
-    this.tweens.add({
-        targets: [teacher, ...pokemons],
-        y: '-=10', // Hover effect instead of scaling to avoid NaN bounds
-        duration: 1000,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
-    });
-
     // Create Player
     player = this.physics.add.sprite(400, 300, 'player');
     player.setDisplaySize(64, 64);
     player.setCollideWorldBounds(true);
 
-    this.anims.create({
-        key: 'down',
-        frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
-        frameRate: 10,
-        repeat: -1
-    });
-    this.anims.create({
-        key: 'left',
-        frames: this.anims.generateFrameNumbers('player', { start: 4, end: 7 }),
-        frameRate: 10,
-        repeat: -1
-    });
-    this.anims.create({
-        key: 'right',
-        frames: this.anims.generateFrameNumbers('player', { start: 8, end: 11 }),
-        frameRate: 10,
-        repeat: -1
-    });
-    this.anims.create({
-        key: 'up',
-        frames: this.anims.generateFrameNumbers('player', { start: 12, end: 15 }),
-        frameRate: 10,
-        repeat: -1
+    // Idle breathing tweens
+    this.tweens.add({
+        targets: [player, teacher, ...pokemons],
+        y: '-=10', // Hover effect
+        duration: 1000,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
     });
 
     // Collisions (Solid barriers)
@@ -123,9 +98,14 @@ function create() {
 }
 
 function update() {
+    // Check if dialog is open and Spacebar is pressed
+    if (dialogueActive && Phaser.Input.Keyboard.JustDown(interactKey)) {
+        hideDialogue();
+        return; // Prevent triggering interactions in the same frame
+    }
+    
     if (puzzleActive || dialogueActive) {
         player.setVelocity(0);
-        player.anims.stop();
         return;
     }
 
@@ -134,18 +114,12 @@ function update() {
 
     if (cursors.left.isDown) {
         player.setVelocityX(-speed);
-        player.anims.play('left', true);
     } else if (cursors.right.isDown) {
         player.setVelocityX(speed);
-        player.anims.play('right', true);
     } else if (cursors.up.isDown) {
         player.setVelocityY(-speed);
-        player.anims.play('up', true);
     } else if (cursors.down.isDown) {
         player.setVelocityY(speed);
-        player.anims.play('down', true);
-    } else {
-        player.anims.stop();
     }
 
     // Interaction with Spacebar
