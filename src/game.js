@@ -3,6 +3,7 @@ const config = {
     width: 800,
     height: 600,
     parent: 'game-container',
+    pixelArt: true,
     physics: {
         default: 'arcade',
         arcade: {
@@ -31,11 +32,11 @@ let currentPokemon = null;
 
 function preload() {
     this.load.image('bg', 'assets/classroom_bg.jpg');
-    this.load.image('player', 'assets/player.jpg');
-    this.load.image('teacher', 'assets/teacher.jpg');
-    this.load.image('pokemon1', 'assets/pokemon1.jpg');
-    this.load.image('pokemon2', 'assets/pokemon2.jpg');
-    this.load.image('pokemon3', 'assets/pokemon3.jpg');
+    this.load.spritesheet('player', 'assets/player_anim.png', { frameWidth: 16, frameHeight: 16 });
+    this.load.image('teacher', 'assets/teacher.png');
+    this.load.image('pokemon1', 'assets/pokemon1.png');
+    this.load.image('pokemon2', 'assets/pokemon2.png');
+    this.load.image('pokemon3', 'assets/pokemon3.png');
 }
 
 function create() {
@@ -61,10 +62,46 @@ function create() {
         p.caught = false;
     });
 
+    // Idle breathing tweens
+    this.tweens.add({
+        targets: [teacher, ...pokemons],
+        scaleY: '*=1.05',
+        scaleX: '*=1.02',
+        duration: 1000,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+    });
+
     // Create Player
     player = this.physics.add.sprite(400, 300, 'player');
     player.setDisplaySize(64, 64);
     player.setCollideWorldBounds(true);
+
+    this.anims.create({
+        key: 'down',
+        frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('player', { start: 4, end: 7 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('player', { start: 8, end: 11 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'up',
+        frames: this.anims.generateFrameNumbers('player', { start: 12, end: 15 }),
+        frameRate: 10,
+        repeat: -1
+    });
 
     // Collisions and interactions
     this.physics.add.collider(player, teacher, interactTeacher, null, this);
@@ -87,6 +124,7 @@ function create() {
 function update() {
     if (puzzleActive || dialogueActive) {
         player.setVelocity(0);
+        player.anims.stop();
         return;
     }
 
@@ -95,14 +133,18 @@ function update() {
 
     if (cursors.left.isDown) {
         player.setVelocityX(-speed);
+        player.anims.play('left', true);
     } else if (cursors.right.isDown) {
         player.setVelocityX(speed);
-    }
-
-    if (cursors.up.isDown) {
+        player.anims.play('right', true);
+    } else if (cursors.up.isDown) {
         player.setVelocityY(-speed);
+        player.anims.play('up', true);
     } else if (cursors.down.isDown) {
         player.setVelocityY(speed);
+        player.anims.play('down', true);
+    } else {
+        player.anims.stop();
     }
 }
 
