@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokemon Academy</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
 <body>
-    <div id="game-container"></div>
+    <div id="game-container">
+        <!-- Level title card (shown briefly whenever a scene starts) -->
+        <div id="level-title"></div>
+        <!-- Always-visible Pokedex progress counter -->
+        <div id="pokedex-hud">Pokedex: 0/6</div>
+    </div>
     <!-- Dialogue UI Overlay -->
     <div id="dialogue-ui" class="hidden">
         <h2 id="dialogue-text">Dialogue Text</h2>
@@ -20,13 +25,13 @@
         <div id="puzzle-options"></div>
         <button id="puzzle-close">Run Away</button>
     </div>
-    <!-- Ending screen shown after walking out the door -->
+    <!-- Ending screen shown after leaving through the school gate -->
     <div id="ending-ui" class="hidden">
         <h1>&#127891; Congratulations!</h1>
-        <p>You made all 3 Pokemon happy and finished your first day at the Pokemon Academy!</p>
+        <p>You made all 6 Pokemon happy and graduated from the Pokemon Academy!</p>
         <button id="ending-restart" onclick="location.reload()">Play Again</button>
     </div>
-    <script src="src/game.js?v=10"></script>
+    <script src="src/game.js?v=11"></script>
 
 </body>
 </html>
