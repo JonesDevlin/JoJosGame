@@ -46,8 +46,8 @@ function create() {
     bg.setDisplaySize(800, 600);
 
     // Create Teacher (standing at the front of the class, below the blackboard)
-    teacher = this.physics.add.staticSprite(400, 240, 'teacher');
-    teacher.setDisplaySize(64, 64);
+    teacher = this.physics.add.staticSprite(400, 234, 'teacher');
+    teacher.setDisplaySize(100, 100);
     teacher.refreshBody(); // static bodies don't follow setDisplaySize on their own
 
     // Create Pokemons
@@ -70,11 +70,11 @@ function create() {
 
     // Create Player (spawns on the open floor at the bottom of the room)
     player = this.physics.add.sprite(400, 550, 'player');
-    player.setDisplaySize(64, 64);
+    player.setDisplaySize(92, 92);
     // Collision box covers only the feet (in source-texture pixels, relative
     // to frame size) so the player can walk between desk rows top-down style
-    player.body.setSize(player.width * 0.5, player.height * 0.22)
-        .setOffset(player.width * 0.25, player.height * 0.74);
+    player.body.setSize(player.width * 0.42, player.height * 0.2)
+        .setOffset(player.width * 0.29, player.height * 0.76);
     player.setCollideWorldBounds(true);
 
     // Keep the player on the classroom floor (inside the walls)
