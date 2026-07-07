@@ -30,6 +30,9 @@ const totalPokemons = 3;
 let puzzleActive = false;
 let dialogueActive = false;
 let currentPokemon = null;
+let playerShadow;
+let interactHint;
+let gameEnded = false;
 
 function preload() {
     this.load.image('bg', 'assets/classroom_bg.jpg?v=4');
@@ -44,6 +47,13 @@ function create() {
     // Add background and scale to fit
     let bg = this.add.image(400, 300, 'bg');
     bg.setDisplaySize(800, 600);
+
+    // Ground shadows so the characters look planted on the floor
+    this.add.ellipse(400, 280, 62, 20, 0x000000, 0.22);  // teacher
+    this.add.ellipse(200, 428, 48, 16, 0x000000, 0.22);  // pokemon1
+    this.add.ellipse(600, 428, 48, 16, 0x000000, 0.22);  // pokemon2
+    this.add.ellipse(400, 528, 48, 16, 0x000000, 0.22);  // pokemon3
+    playerShadow = this.add.ellipse(400, 592, 52, 17, 0x000000, 0.22);
 
     // Create Teacher (standing at the front of the class, below the blackboard)
     teacher = this.physics.add.staticSprite(400, 234, 'teacher');
@@ -69,7 +79,7 @@ function create() {
     });
 
     // Create Player (spawns on the open floor at the bottom of the room)
-    player = this.physics.add.sprite(400, 550, 'player');
+    player = this.physics.add.sprite(400, 515, 'player');
     player.setDisplaySize(92, 92);
     // Collision box covers only the feet (in source-texture pixels, relative
     // to frame size) so the player can walk between desk rows top-down style
@@ -95,15 +105,16 @@ function create() {
     obstacles.add(teacherDesk);
     this.physics.add.collider(player, obstacles);
 
-    // Idle breathing tweens
-    this.tweens.add({
-        targets: [teacher, ...pokemons], // Removed player so Y-axis physics work again
-        y: '-=10', // Hover effect
-        duration: 1000,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
-    });
+    // Bobbing "!" hint shown over whichever character is close enough to
+    // interact with (replaces the old hover tween as the interaction cue)
+    interactHint = this.add.text(0, 0, '!', {
+        fontFamily: 'Courier New',
+        fontSize: '30px',
+        fontStyle: 'bold',
+        color: '#ffeb3b',
+        stroke: '#000000',
+        strokeThickness: 5
+    }).setOrigin(0.5, 1).setVisible(false);
 
     // Collisions (Solid barriers)
     this.physics.add.collider(player, teacher);
@@ -124,16 +135,64 @@ function create() {
     });
 }
 
-function update() {
+function update(time) {
+    playerShadow.setPosition(player.x, player.y + 42);
+
+    if (gameEnded) {
+        player.setVelocity(0);
+        return;
+    }
+
+    // Door exit: the Pikachu rug at the bottom is the welcome mat for the
+    // (off-screen) classroom door
+    if (player.y > 535 && player.x > 350 && player.x < 450) {
+        if (pokedexCount >= totalPokemons) {
+            gameEnded = true;
+            player.setVelocity(0);
+            interactHint.setVisible(false);
+            this.cameras.main.fadeOut(900, 0, 0, 0);
+            this.cameras.main.once('camerafadeoutcomplete', () => {
+                document.getElementById('ending-ui').classList.remove('hidden');
+            });
+            return;
+        } else if (!dialogueActive && !puzzleActive) {
+            player.setPosition(player.x, 520); // step back off the mat
+            showDialogue(hasPokedex
+                ? "Professor: Not so fast! " + (totalPokemons - pokedexCount) + " Pokemon still need cheering up."
+                : "Professor: Class is in session! Come get your Pokedex first.");
+        }
+    }
+
     // Check if dialog is open and Spacebar is pressed
     if (dialogueActive && Phaser.Input.Keyboard.JustDown(interactKey)) {
         hideDialogue();
         return; // Prevent triggering interactions in the same frame
     }
-    
+
     if (puzzleActive || dialogueActive) {
         player.setVelocity(0);
+        interactHint.setVisible(false);
         return;
+    }
+
+    // Point the bobbing "!" at whichever character is in interaction range
+    let hintTarget = null;
+    if (Phaser.Math.Distance.Between(player.x, player.y, teacher.x, teacher.y) < 80) {
+        hintTarget = teacher;
+    }
+    pokemons.forEach(p => {
+        if (!p.caught && Phaser.Math.Distance.Between(player.x, player.y, p.x, p.y) < 80) {
+            hintTarget = p;
+        }
+    });
+    if (hintTarget) {
+        interactHint.setVisible(true);
+        interactHint.setPosition(
+            hintTarget.x,
+            hintTarget.y - hintTarget.displayHeight / 2 - 6 + Math.sin(time / 180) * 4
+        );
+    } else {
+        interactHint.setVisible(false);
     }
 
     const speed = 200;
@@ -179,7 +238,7 @@ function interactTeacher() {
     } else if (pokedexCount < totalPokemons) {
         showDialogue("Professor: You still have " + (totalPokemons - pokedexCount) + " Pokemon to catch.");
     } else {
-        showDialogue("Professor: Amazing! You completed the Pokedex! You pass!");
+        showDialogue("Professor: Amazing! You completed the Pokedex! You pass! Head out the door - the Pikachu rug marks the way.");
     }
 }
 

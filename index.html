@@ -20,7 +20,13 @@
         <div id="puzzle-options"></div>
         <button id="puzzle-close">Run Away</button>
     </div>
-    <script src="src/game.js?v=7"></script>
+    <!-- Ending screen shown after walking out the door -->
+    <div id="ending-ui" class="hidden">
+        <h1>&#127891; Congratulations!</h1>
+        <p>You made all 3 Pokemon happy and finished your first day at the Pokemon Academy!</p>
+        <button id="ending-restart" onclick="location.reload()">Play Again</button>
+    </div>
+    <script src="src/game.js?v=9"></script>
 
 </body>
 </html>
