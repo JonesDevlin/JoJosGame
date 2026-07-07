@@ -325,6 +325,46 @@ document.getElementById('dialogue-close').addEventListener('click', () => {
     hideDialogue();
 });
 
+// ---- Level chrome: title cards + Pokedex HUD (global, outside the scenes) ----
+
+const LEVEL_TITLES = {
+    ClassroomScene: 'Room 123',
+    SchoolyardScene: 'Level 2: The Schoolyard'
+};
+
+let levelTitleTimer = null;
+
+// Briefly shows the level name near the top of the screen. The overlay is
+// pointer-events: none, so it never blocks input or dialogue.
+function showLevelTitle(sceneKey) {
+    const el = document.getElementById('level-title');
+    el.innerText = LEVEL_TITLES[sceneKey] || sceneKey;
+    clearTimeout(levelTitleTimer);
+    el.classList.remove('show');
+    void el.offsetWidth; // force reflow so the fade restarts on scene changes
+    el.classList.add('show');
+    levelTitleTimer = setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function updatePokedexHud(count) {
+    document.getElementById('pokedex-hud').innerText = 'Pokedex: ' + (count || 0) + '/6';
+}
+
+// Hook every scene's create event once the game has booted. The SceneManager
+// also boots on READY (its listener runs first), but scene create waits for
+// the async preload, so these hooks attach in time for the first create.
+game.events.once(Phaser.Core.Events.READY, () => {
+    game.scene.scenes.forEach(s => {
+        s.sys.events.on(Phaser.Scenes.Events.CREATE, () => showLevelTitle(s.scene.key));
+    });
+    updatePokedexHud(game.registry.get('caughtCount'));
+});
+
+// Keep the HUD in sync with cross-level progress in the registry
+game.registry.events.on('changedata-caughtCount', (parent, value) => {
+    updatePokedexHud(value);
+});
+
 // ---- Interactions ----
 
 function interactTeacher() {
