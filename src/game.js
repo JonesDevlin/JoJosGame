@@ -10,6 +10,7 @@ let currentPokemon = null;
 let lastInteract = 0;
 
 const CLASSROOM_TOTAL = 3;
+const SCHOOLYARD_TOTAL = 6; // full Pokedex: 3 classroom + 3 yard Pokemon
 const CLASSROOM_EXIT = { y: 535, minX: 350, maxX: 450 };
 const SCHOOLYARD_EXIT = { y: 530, minX: 350, maxX: 450 };
 
@@ -243,24 +244,81 @@ class ClassroomScene extends Phaser.Scene {
     }
 }
 
-// Level 2 shell: placeholder background and a temporary exit until the real
-// schoolyard content (Coach + 3 Pokemon) lands
+// Level 2: the schoolyard at recess — Coach and 3 rowdier Pokemon.
+// Background layout lives in scripts/make_placeholder_yard.js (image coords
+// map to canvas via x*0.5814, y*0.78125): school wall+door at top, fence with
+// a bottom-center gate, sandbox left-center, trees right side.
 class SchoolyardScene extends Phaser.Scene {
     constructor() {
         super('SchoolyardScene');
     }
 
+    preload() {
+        this.load.image('yard_bg', 'assets/schoolyard_bg.jpg?v=1');
+        this.load.image('coach', 'assets/coach.png?v=1');
+        this.load.image('pokemon4', 'assets/pokemon4.png?v=1');
+        this.load.image('pokemon5', 'assets/pokemon5.png?v=1');
+        this.load.image('pokemon6', 'assets/pokemon6.png?v=1');
+    }
+
     create() {
-        // Placeholder grass until assets/schoolyard_bg.jpg exists
-        this.add.rectangle(400, 300, 800, 600, 0x5a9445);
+        if (this.registry.get('coachIntro') === undefined) {
+            this.registry.set('coachIntro', false);
+        }
+        // Pokemon interactions in this scene are locked behind Coach's pep
+        // talk (checked by the global interactPokemon)
+        this.requireCoachIntro = true;
+
+        let bg = this.add.image(400, 300, 'yard_bg');
+        bg.setDisplaySize(800, 600);
+
+        // Coach stands beside the sandbox, keeping an eye on recess
+        this.coach = createNpc(this, 300, 300, 'coach', 100, 46, 62, 20);
+
+        // The three yard Pokemon, spread around the field
+        const p4 = createNpc(this, 160, 470, 'pokemon4', 64, 28, 48, 16);
+        const p5 = createNpc(this, 500, 480, 'pokemon5', 64, 28, 48, 16);
+        const p6 = createNpc(this, 600, 280, 'pokemon6', 64, 28, 48, 16);
+        p4.name = 'Pika-spark';
+        p5.name = 'Psy-duckling';
+        p6.name = 'Flutter-bird';
+        p4.puzzleType = 'circuit';
+        p5.puzzleType = 'slider';
+        p6.puzzleType = 'catch';
+        this.pokemons = [p4, p5, p6];
+        this.pokemons.forEach(p => {
+            p.caught = false;
+        });
 
         // Player fades in at the top center, just below the school door
-        this.playerShadow = this.add.ellipse(400, 162, 52, 17, 0x000000, 0.22);
-        this.player = createPlayer(this, 400, 120);
-        this.physics.world.setBounds(50, 80, 700, 500);
+        this.playerShadow = this.add.ellipse(400, 212, 52, 17, 0x000000, 0.22);
+        this.player = createPlayer(this, 400, 170);
 
-        this.pokemons = [];
+        // Keep the player inside the fence (top = school wall base)
+        this.physics.world.setBounds(40, 150, 720, 435);
+
+        // Invisible static colliders matching the background art
+        const obstacles = this.physics.add.staticGroup();
+        const addObstacle = (x, y, w, h) => {
+            const r = this.add.rectangle(x, y, w, h);
+            this.physics.add.existing(r, true);
+            obstacles.add(r);
+        };
+        addObstacle(204, 336, 140, 120);  // sandbox (image 230-470 x 350-510)
+        addObstacle(669, 205, 100, 80);   // tree canopy 1 (image 1150,250)
+        addObstacle(715, 375, 90, 70);    // tree canopy 2 (image 1230,470)
+        addObstacle(628, 480, 80, 60);    // tree canopy 3 (image 1080,620)
+        // Bottom fence, split by the gate opening (canvas x 350-450)
+        addObstacle(195, 585, 310, 40);   // fence left of gate
+        addObstacle(605, 585, 310, 40);   // fence right of gate
+        this.physics.add.collider(this.player, obstacles);
+
         this.interactHint = createInteractHint(this);
+
+        this.physics.add.collider(this.player, this.coach);
+        this.pokemons.forEach(p => {
+            this.physics.add.collider(this.player, p);
+        });
 
         this.cursors = this.input.keyboard.createCursorKeys();
         this.interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -278,23 +336,53 @@ class SchoolyardScene extends Phaser.Scene {
             return;
         }
 
-        // Temporary exit: the school gate at the bottom ends the game
-        // unconditionally until Level 2 progression is wired up
+        // School gate at the bottom: blocked until the Pokedex is complete,
+        // then it triggers the graduation ending
         if (inExitZone(this.player, SCHOOLYARD_EXIT)) {
-            this.exiting = true;
-            this.player.setVelocity(0);
-            this.interactHint.setVisible(false);
-            this.cameras.main.fadeOut(900, 0, 0, 0);
-            this.cameras.main.once('camerafadeoutcomplete', () => {
-                document.getElementById('ending-ui').classList.remove('hidden');
-            });
-            return;
+            if (this.registry.get('caughtCount') >= SCHOOLYARD_TOTAL) {
+                this.exiting = true;
+                this.player.setVelocity(0);
+                this.interactHint.setVisible(false);
+                this.cameras.main.fadeOut(900, 0, 0, 0);
+                this.cameras.main.once('camerafadeoutcomplete', () => {
+                    document.getElementById('ending-ui').classList.remove('hidden');
+                });
+                return;
+            } else if (!dialogueActive && !puzzleActive) {
+                this.player.setPosition(this.player.x, 515); // step back from the gate
+                showDialogue("Coach: Recess isn't over! "
+                    + (SCHOOLYARD_TOTAL - this.registry.get('caughtCount'))
+                    + " Pokemon still need cheering up before you can head out the gate.");
+            }
         }
 
         if (overlayBlocking(this)) return;
 
-        updateInteractHint(this.interactHint, null, time);
+        let hintTarget = null;
+        if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.coach.x, this.coach.y) < 80) {
+            hintTarget = this.coach;
+        }
+        this.pokemons.forEach(p => {
+            if (!p.caught && Phaser.Math.Distance.Between(this.player.x, this.player.y, p.x, p.y) < 80) {
+                hintTarget = p;
+            }
+        });
+        updateInteractHint(this.interactHint, hintTarget, time);
+
         updatePlayerMovement(this);
+
+        // Interaction with Spacebar
+        if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.coach.x, this.coach.y) < 80) {
+                interactCoach();
+            } else {
+                this.pokemons.forEach(p => {
+                    if (Phaser.Math.Distance.Between(this.player.x, this.player.y, p.x, p.y) < 80) {
+                        interactPokemon(p);
+                    }
+                });
+            }
+        }
     }
 }
 
@@ -355,9 +443,33 @@ function interactPokemon(pokemon) {
         return;
     }
 
+    // Schoolyard-only gate: Coach's pep talk unlocks the yard Pokemon
+    // (scenes opt in via this.requireCoachIntro; Level 1 is unaffected)
+    if (activeScene && activeScene.requireCoachIntro && !game.registry.get('coachIntro')) {
+        showDialogue("Talk to Coach first!");
+        return;
+    }
+
     if (pokemon.caught) return;
 
     showPuzzle(pokemon);
+}
+
+function interactCoach() {
+    if (dialogueActive || puzzleActive) return;
+
+    let now = Date.now();
+    if (now - lastInteract < 1000) return;
+
+    const caughtCount = game.registry.get('caughtCount');
+    if (!game.registry.get('coachIntro')) {
+        game.registry.set('coachIntro', true);
+        showDialogue("Coach: Welcome to recess! Three Pokemon are running wild out here — show me your Academy spirit and cheer them up!");
+    } else if (caughtCount < SCHOOLYARD_TOTAL) {
+        showDialogue("Coach: Keep that energy up! " + (SCHOOLYARD_TOTAL - caughtCount) + " Pokemon still need cheering up.");
+    } else {
+        showDialogue("Coach: Outstanding hustle! Your Pokedex is complete — head out the school gate at the bottom of the yard!");
+    }
 }
 
 // ---- Dialogue / puzzle HTML overlays (global on purpose: the setup*Puzzle
