@@ -76,6 +76,90 @@ button.puzzle-btn {
 button.puzzle-btn:hover {
     background-color: #45a049;
 }
+.puzzle-status {
+    margin: 5px 0 10px;
+    font-size: 14px;
+    color: #ffd54f;
+    min-height: 18px;
+}
+
+/* Sequence (Simon) puzzle */
+.sequence-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 10px auto;
+    width: 220px;
+}
+.sequence-pad {
+    height: 70px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.15s, transform 0.15s;
+}
+.sequence-pad.lit {
+    opacity: 1;
+    transform: scale(1.06);
+    border-color: #fff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+}
+
+/* Timing (spark) puzzle */
+.timing-bar {
+    position: relative;
+    height: 30px;
+    margin: 15px 0;
+    background: #333;
+    border: 2px solid #fff;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.timing-zone {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #ff9800, #f44336, #ff9800);
+}
+.timing-marker {
+    position: absolute;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    background: #fff;
+    box-shadow: 0 0 8px #fff;
+}
+.timing-marker.hit {
+    background: #ffeb3b;
+    box-shadow: 0 0 15px #ffeb3b;
+}
+
+/* Match (pairs) puzzle */
+.match-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 10px 0;
+}
+.match-card {
+    height: 55px;
+    font-size: 24px;
+    background: #26418f;
+    color: white;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.match-card.revealed {
+    background: #4CAF50;
+}
+.match-card.matched {
+    background: #2e7d32;
+    border-color: #ffd54f;
+    cursor: default;
+}
+
 #puzzle-close {
     margin-top: 15px;
     padding: 8px 16px;

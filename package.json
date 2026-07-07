@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/JonesDevlin/JoJosGame#readme",
   "dependencies": {
+    "@imgly/background-removal-node": "^1.4.5",
     "jimp": "^0.16.13"
   }
 }
