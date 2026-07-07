@@ -191,6 +191,83 @@ button.puzzle-btn:hover {
     cursor: default;
 }
 
+/* Circuit (power grid) puzzle */
+.circuit-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 10px auto;
+    width: 200px;
+}
+.circuit-node {
+    height: 54px;
+    background: #263238;
+    border: 3px solid rgba(255, 235, 59, 0.3);
+    border-radius: 10px;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.circuit-node.lit {
+    opacity: 1;
+    transform: scale(1.08);
+    background: #ffee58;
+    border-color: #fff9c4;
+    box-shadow: 0 0 18px rgba(255, 235, 59, 0.9);
+}
+
+/* Slider (picture tiles) puzzle */
+.slider-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 64px);
+    gap: 4px;
+    margin: 10px auto;
+    width: 200px;
+}
+.slider-tile {
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    background-color: #26418f;
+    background-size: 192px 192px;
+    color: white;
+    font-size: 20px;
+    border: 2px solid #fff;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.slider-tile.empty {
+    background: rgba(0, 0, 0, 0.35);
+    border-style: dashed;
+    cursor: default;
+}
+
+/* Catch (feathers) puzzle */
+.catch-area {
+    position: relative;
+    width: 260px;
+    height: 220px;
+    margin: 10px auto;
+    background: linear-gradient(180deg, #3b5998, #26418f);
+    border: 2px solid #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.catch-feather {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font-size: 22px;
+    line-height: 30px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.catch-feather:hover {
+    transform: scale(1.2);
+}
+
 #puzzle-close {
     margin-top: 15px;
     padding: 8px 16px;
