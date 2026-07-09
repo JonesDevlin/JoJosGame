@@ -229,81 +229,119 @@ button.puzzle-btn:hover {
     cursor: default;
 }
 
-/* Circuit (power grid) puzzle */
-.circuit-grid {
+/* Maze (trace the spark) puzzle */
+.maze-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 28px);
+    justify-content: center;
+    margin: 10px auto;
+    border: 3px solid #ffd54f;
+    border-radius: 6px;
+    width: fit-content;
+    background: #1a237e;
+}
+.maze-cell {
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+    line-height: 28px;
+    text-align: center;
+}
+.maze-cell.wall {
+    background: #0d1442;
+    box-shadow: inset 0 0 4px #000;
+}
+.maze-cell.path {
+    background: #3949ab;
+}
+.maze-cell.start {
+    background: #43a047;
+}
+.maze-cell.goal {
+    background: #fbc02d;
+}
+.maze-grid.zapped {
+    animation: maze-shake 0.25s;
+}
+@keyframes maze-shake {
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+/* Whack-a-duckling puzzle */
+.whack-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
     margin: 10px auto;
-    width: 200px;
+    width: 220px;
 }
-.circuit-node {
-    height: 54px;
-    background: #263238;
-    border: 3px solid rgba(255, 235, 59, 0.3);
-    border-radius: 10px;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
-}
-.circuit-node.lit {
-    opacity: 1;
-    transform: scale(1.08);
-    background: #ffee58;
-    border-color: #fff9c4;
-    box-shadow: 0 0 18px rgba(255, 235, 59, 0.9);
-}
-
-/* Slider (picture tiles) puzzle */
-.slider-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 64px);
-    gap: 4px;
-    margin: 10px auto;
-    width: 200px;
-}
-.slider-tile {
-    width: 64px;
-    height: 64px;
+.whack-hole {
+    height: 60px;
     padding: 0;
-    background-color: #26418f;
-    background-size: 192px 192px;
-    color: white;
-    font-size: 20px;
-    border: 2px solid #fff;
-    border-radius: 6px;
+    font-size: 26px;
+    background: radial-gradient(circle at 50% 70%, #3e2723 55%, #261611 100%);
+    border: 3px solid #1b0f0b;
+    border-radius: 50%;
     cursor: pointer;
+    overflow: hidden;
 }
-.slider-tile.empty {
-    background: rgba(0, 0, 0, 0.35);
-    border-style: dashed;
-    cursor: default;
+.whack-hole img {
+    width: 44px;
+    height: 44px;
+    pointer-events: none;
+}
+.whack-hole.up {
+    border-color: #ffd54f;
+}
+.whack-hole.bopped {
+    transform: scale(0.9);
+    background: #4CAF50;
 }
 
-/* Catch (feathers) puzzle */
-.catch-area {
+/* Rhythm (tap the drum) puzzle */
+.rhythm-area {
     position: relative;
     width: 260px;
-    height: 220px;
+    height: 200px;
     margin: 10px auto;
-    background: linear-gradient(180deg, #3b5998, #26418f);
+    background: linear-gradient(180deg, #311b92, #1a237e);
     border: 2px solid #fff;
     border-radius: 8px;
     overflow: hidden;
 }
-.catch-feather {
+.rhythm-drum {
     position: absolute;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    font-size: 22px;
-    line-height: 30px;
-    background: none;
-    border: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px;
+    height: 70px;
+    font-size: 34px;
+    background: #4527a0;
+    border: 3px solid #ffd54f;
+    border-radius: 50%;
     cursor: pointer;
+    z-index: 2;
 }
-.catch-feather:hover {
-    transform: scale(1.2);
+.rhythm-drum.hit {
+    background: #43a047;
+    box-shadow: 0 0 20px #66bb6a;
+}
+.rhythm-drum.missed {
+    background: #b71c1c;
+}
+.rhythm-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(2.2);
+    width: 70px;
+    height: 70px;
+    border: 4px solid #ffeb3b;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
 }
 
 #puzzle-close {

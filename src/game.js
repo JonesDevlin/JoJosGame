@@ -256,9 +256,10 @@ class SchoolyardScene extends Phaser.Scene {
     preload() {
         this.load.image('yard_bg', 'assets/schoolyard_bg.jpg?v=1');
         this.load.image('coach', 'assets/coach.png?v=1');
-        this.load.image('pokemon4', 'assets/pokemon4.png?v=1');
-        this.load.image('pokemon5', 'assets/pokemon5.png?v=1');
-        this.load.image('pokemon6', 'assets/pokemon6.png?v=1');
+        this.load.image('pokemon4', 'assets/pokemon4.png?v=2');
+        this.load.image('pokemon5', 'assets/pokemon5.png?v=2');
+        this.load.image('pokemon6', 'assets/pokemon6.png?v=2');
+        this.load.image('mimi', 'assets/mimi.png?v=1');
     }
 
     create() {
@@ -279,15 +280,32 @@ class SchoolyardScene extends Phaser.Scene {
         const p4 = createNpc(this, 160, 470, 'pokemon4', 64, 28, 48, 16);
         const p5 = createNpc(this, 500, 480, 'pokemon5', 64, 28, 48, 16);
         const p6 = createNpc(this, 600, 280, 'pokemon6', 64, 28, 48, 16);
-        p4.name = 'Pika-spark';
-        p5.name = 'Psy-duckling';
-        p6.name = 'Flutter-bird';
-        p4.puzzleType = 'circuit';
-        p5.puzzleType = 'slider';
-        p6.puzzleType = 'catch';
+        p4.name = 'Ruby-spark';
+        p5.name = 'Ruby-scale';
+        p6.name = 'Ruby-wing';
+        p4.puzzleType = 'maze';
+        p5.puzzleType = 'whack';
+        p6.puzzleType = 'rhythm';
         this.pokemons = [p4, p5, p6];
         this.pokemons.forEach(p => {
             p.caught = false;
+        });
+
+        // Mimi-Q pedals its bicycle back and forth across the yard (pure
+        // decoration + a chat, not part of the Pokedex — no physics body)
+        this.mimiShadow = this.add.ellipse(110, 468, 56, 14, 0x000000, 0.22);
+        this.mimi = this.add.sprite(110, 433, 'mimi');
+        this.mimi.setDisplaySize(78, 78);
+        this.mimi.name = 'Mimi-Q';
+        this.tweens.add({
+            targets: [this.mimi, this.mimiShadow],
+            x: 690,
+            duration: 7000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+            onYoyo: () => this.mimi.setFlipX(true),
+            onRepeat: () => this.mimi.setFlipX(false)
         });
 
         // Player fades in at the top center, just below the school door
@@ -367,6 +385,9 @@ class SchoolyardScene extends Phaser.Scene {
                 hintTarget = p;
             }
         });
+        if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.mimi.x, this.mimi.y) < 80) {
+            hintTarget = this.mimi;
+        }
         updateInteractHint(this.interactHint, hintTarget, time);
 
         updatePlayerMovement(this);
@@ -375,6 +396,8 @@ class SchoolyardScene extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
             if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.coach.x, this.coach.y) < 80) {
                 interactCoach();
+            } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.mimi.x, this.mimi.y) < 80) {
+                interactMimi();
             } else {
                 this.pokemons.forEach(p => {
                     if (Phaser.Math.Distance.Between(this.player.x, this.player.y, p.x, p.y) < 80) {
@@ -495,6 +518,15 @@ function interactPokemon(pokemon) {
     showPuzzle(pokemon);
 }
 
+function interactMimi() {
+    if (dialogueActive || puzzleActive) return;
+
+    let now = Date.now();
+    if (now - lastInteract < 1000) return;
+
+    showDialogue("Mimi-Q: Ring ring! Nice wheels, right? I never take my costume off while riding — helmet hair!");
+}
+
 function interactCoach() {
     if (dialogueActive || puzzleActive) return;
 
@@ -504,9 +536,9 @@ function interactCoach() {
     const caughtCount = game.registry.get('caughtCount');
     if (!game.registry.get('coachIntro')) {
         game.registry.set('coachIntro', true);
-        showDialogue("Coach: Welcome to recess! Three Pokemon are running wild out here — show me your Academy spirit and cheer them up!");
+        showDialogue("Coach: Welcome to recess! Three ruby dragons are running wild out here — show me your Academy spirit and cheer them up!");
     } else if (caughtCount < SCHOOLYARD_TOTAL) {
-        showDialogue("Coach: Keep that energy up! " + (SCHOOLYARD_TOTAL - caughtCount) + " Pokemon still need cheering up.");
+        showDialogue("Coach: Keep that energy up! " + (SCHOOLYARD_TOTAL - caughtCount) + " ruby dragons still need cheering up.");
     } else {
         showDialogue("Coach: Outstanding hustle! Your Pokedex is complete — head out the school gate at the bottom of the yard!");
     }
@@ -556,12 +588,12 @@ function showPuzzle(pokemon) {
         setupSequencePuzzle(title, options, pokemon);
     } else if (pokemon.puzzleType === 'timing') {
         setupTimingPuzzle(title, options, pokemon);
-    } else if (pokemon.puzzleType === 'circuit') {
-        setupCircuitPuzzle(title, options, pokemon);
-    } else if (pokemon.puzzleType === 'slider') {
-        setupSliderPuzzle(title, options, pokemon);
-    } else if (pokemon.puzzleType === 'catch') {
-        setupCatchPuzzle(title, options, pokemon);
+    } else if (pokemon.puzzleType === 'maze') {
+        setupMazePuzzle(title, options, pokemon);
+    } else if (pokemon.puzzleType === 'whack') {
+        setupWhackPuzzle(title, options, pokemon);
+    } else if (pokemon.puzzleType === 'rhythm') {
+        setupRhythmPuzzle(title, options, pokemon);
     } else {
         setupMatchPuzzle(title, options, pokemon);
     }
@@ -751,251 +783,148 @@ function setupMatchPuzzle(title, options, pokemon) {
     puzzleCleanup = () => clearTimeout(mismatchTimer);
 }
 
-// Puzzle 4 (Pika-spark): watch a 5-node path light up on the grid, then retrace it
-function setupCircuitPuzzle(title, options, pokemon) {
-    title.innerText = `${pokemon.name}'s power is out! Watch the circuit light up, then reconnect it in order.`;
+// Puzzle 4 (Ruby-spark): trace the spark through the wire maze without
+// touching the walls (steady-hand game; touching a wall resets to the start)
+function setupMazePuzzle(title, options, pokemon) {
+    title.innerText = `${pokemon.name}'s flame spark bounced away! Pick it up and guide it through the maze to the bulb.`;
 
-    const path = [];
-    for (let i = 0; i < 5; i++) {
-        let node = Math.floor(Math.random() * 9);
-        while (node === path[path.length - 1]) {
-            node = Math.floor(Math.random() * 9);
-        }
-        path.push(node);
-    }
+    // S = start, G = goal, # = wall, . = open corridor (serpentine path)
+    const layout = [
+        'S.......#',
+        '#######.#',
+        '#.......#',
+        '#.#######',
+        '#.......#',
+        '#######.#',
+        '#######G#'
+    ];
 
     const status = document.createElement('p');
     status.className = 'puzzle-status';
-    status.innerText = 'Watch closely...';
+    status.innerText = 'Touch the spark to pick it up!';
     options.appendChild(status);
 
     const grid = document.createElement('div');
-    grid.className = 'circuit-grid';
+    grid.className = 'maze-grid';
     options.appendChild(grid);
 
-    const timers = [];
-    let playerIndex = 0;
-    let accepting = false;
-
-    function flashNode(node) {
-        node.classList.add('lit');
-        timers.push(setTimeout(() => node.classList.remove('lit'), 350));
-    }
-
-    const nodes = [];
-    for (let i = 0; i < 9; i++) {
-        const node = document.createElement('button');
-        node.className = 'circuit-node';
-        node.onclick = () => {
-            if (!accepting) return;
-            flashNode(node);
-            if (i === path[playerIndex]) {
-                playerIndex++;
-                if (playerIndex === path.length) {
-                    accepting = false;
-                    timers.push(setTimeout(() => solvePuzzle(true), 400));
-                }
-            } else {
-                accepting = false;
-                timers.push(setTimeout(() => solvePuzzle(false), 400));
-            }
-        };
-        grid.appendChild(node);
-        nodes.push(node);
-    }
-
-    // Play the path back one node at a time, then hand control to the player
-    path.forEach((nodeIndex, i) => {
-        timers.push(setTimeout(() => flashNode(nodes[nodeIndex]), 600 + i * 550));
-    });
-    timers.push(setTimeout(() => {
-        status.innerText = 'Your turn! Reconnect the circuit.';
-        accepting = true;
-    }, 600 + path.length * 550));
-
-    puzzleCleanup = () => timers.forEach(t => clearTimeout(t));
-}
-
-// Puzzle 5 (Psy-duckling): slide tiles to restore the Pokemon's scrambled portrait
-function setupSliderPuzzle(title, options, pokemon) {
-    title.innerText = `${pokemon.name} scrambled its own picture! Slide the tiles to fix it.`;
-
-    const size = 3;
-    const tileSize = 64;
-    const tileCount = size * size;
-    const empty = tileCount - 1;
-    const imageUrl = (pokemon.texture && pokemon.texture.key)
-        ? `assets/${pokemon.texture.key}.png`
-        : null;
-
-    // board[slot] = tile that currently sits there; tile `empty` is the gap
-    const board = [];
-    for (let i = 0; i < tileCount; i++) board.push(i);
-    let emptySlot = empty;
-
-    function neighbors(slot) {
-        const row = Math.floor(slot / size);
-        const col = slot % size;
-        const result = [];
-        if (row > 0) result.push(slot - size);
-        if (row < size - 1) result.push(slot + size);
-        if (col > 0) result.push(slot - 1);
-        if (col < size - 1) result.push(slot + 1);
-        return result;
-    }
-
-    function isSolved() {
-        return board.every((tile, slot) => tile === slot);
-    }
-
-    function slideTile(slot) {
-        board[emptySlot] = board[slot];
-        board[slot] = empty;
-        emptySlot = slot;
-    }
-
-    // Shuffle with random valid moves only, so the puzzle is always solvable
-    let lastFilled = -1;
-    for (let i = 0; i < 30 || isSolved(); i++) {
-        const choices = neighbors(emptySlot).filter(slot => slot !== lastFilled);
-        lastFilled = emptySlot;
-        slideTile(choices[Math.floor(Math.random() * choices.length)]);
-    }
-
-    const grid = document.createElement('div');
-    grid.className = 'slider-grid';
-    options.appendChild(grid);
-
+    let tracing = false;
     let done = false;
     let finishTimer = null;
-    const cells = [];
-    for (let slot = 0; slot < tileCount; slot++) {
-        const cell = document.createElement('button');
-        cell.className = 'slider-tile';
-        cell.onclick = () => {
-            if (done || board[slot] === empty) return;
-            if (!neighbors(slot).includes(emptySlot)) return;
-            slideTile(slot);
-            render();
-            if (isSolved()) {
-                done = true;
-                finishTimer = setTimeout(() => solvePuzzle(true), 600);
-            }
-        };
-        grid.appendChild(cell);
-        cells.push(cell);
+    let startCell = null;
+
+    function resetSpark() {
+        tracing = false;
+        grid.classList.add('zapped');
+        setTimeout(() => grid.classList.remove('zapped'), 250);
+        startCell.innerText = '⚡';
+        status.innerText = 'Bzzt! Back to the start...';
     }
 
-    function render() {
-        cells.forEach((cell, slot) => {
-            const tile = board[slot];
-            cell.dataset.tile = tile;
-            if (tile === empty) {
-                cell.className = 'slider-tile empty';
-                cell.style.backgroundImage = '';
-                cell.style.backgroundPosition = '';
-                cell.innerText = '';
-            } else if (imageUrl) {
-                cell.className = 'slider-tile';
-                cell.style.backgroundImage = `url(${imageUrl})`;
-                cell.style.backgroundPosition =
-                    `-${(tile % size) * tileSize}px -${Math.floor(tile / size) * tileSize}px`;
-                cell.innerText = '';
-            } else {
-                cell.className = 'slider-tile';
-                cell.style.backgroundImage = '';
-                cell.style.backgroundPosition = '';
-                cell.innerText = tile + 1;
+    layout.forEach(row => {
+        [...row].forEach(ch => {
+            const cell = document.createElement('div');
+            cell.className = 'maze-cell ' + (ch === '#' ? 'wall' : 'path');
+            if (ch === 'S') {
+                cell.classList.add('start');
+                cell.innerText = '⚡';
+                startCell = cell;
             }
+            if (ch === 'G') {
+                cell.classList.add('goal');
+                cell.innerText = '💡';
+            }
+            cell.onmouseenter = () => {
+                if (done) return;
+                if (ch === 'S') {
+                    tracing = true;
+                    startCell.innerText = '';
+                    status.innerText = 'Careful... guide it to the bulb!';
+                } else if (ch === '#') {
+                    if (tracing) resetSpark();
+                } else if (ch === 'G' && tracing) {
+                    done = true;
+                    cell.innerText = '✨';
+                    status.innerText = 'The bulb lit up!';
+                    finishTimer = setTimeout(() => solvePuzzle(true), 600);
+                }
+            };
+            grid.appendChild(cell);
         });
-    }
-    render();
+    });
 
     puzzleCleanup = () => clearTimeout(finishTimer);
 }
 
-// Puzzle 6 (Flutter-bird): click all the drifting feathers before time runs out
-function setupCatchPuzzle(title, options, pokemon) {
-    title.innerText = `${pokemon.name} shook loose its feathers! Catch them all before they blow away.`;
+// Puzzle 5 (Ruby-scale): whack-a-dragon — it pops out of holes, bop it
+// 8 times before the timer runs out
+function setupWhackPuzzle(title, options, pokemon) {
+    title.innerText = `${pokemon.name} is playing hide and seek! Bop it 8 times before recess ends.`;
 
-    const totalFeathers = 8;
-    const timeLimit = 20;
-    const featherSize = 30;
+    const targetBops = 8;
+    const timeLimit = 25;
+    let bops = 0;
+    let timeLeft = timeLimit;
+    let finished = false;
 
     const status = document.createElement('p');
     status.className = 'puzzle-status';
     options.appendChild(status);
 
-    const area = document.createElement('div');
-    area.className = 'catch-area';
-    options.appendChild(area);
-
-    const areaWidth = 260;
-    const areaHeight = 220;
-    let remaining = totalFeathers;
-    let timeLeft = timeLimit;
-    let finished = false;
-
     function updateStatus() {
-        status.innerText = 'Time: ' + timeLeft + 's — Feathers: ' + remaining + '/' + totalFeathers;
+        status.innerText = 'Bops: ' + bops + '/' + targetBops + ' — Time: ' + timeLeft + 's';
     }
     updateStatus();
 
-    const feathers = [];
-    for (let i = 0; i < totalFeathers; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'catch-feather';
-        btn.innerText = '\u{1FAB6}'; // 🪶
-        const feather = {
-            el: btn,
-            x: Math.random() * (areaWidth - featherSize),
-            y: Math.random() * (areaHeight - featherSize),
-            vx: (Math.random() * 1.6 + 0.7) * (Math.random() < 0.5 ? -1 : 1),
-            vy: (Math.random() * 1.6 + 0.7) * (Math.random() < 0.5 ? -1 : 1)
-        };
-        btn.onclick = () => {
-            if (finished) return;
-            const idx = feathers.indexOf(feather);
-            if (idx !== -1) feathers.splice(idx, 1);
-            btn.remove();
-            remaining--;
+    const grid = document.createElement('div');
+    grid.className = 'whack-grid';
+    options.appendChild(grid);
+
+    const holes = [];
+    for (let i = 0; i < 9; i++) {
+        const hole = document.createElement('button');
+        hole.className = 'whack-hole';
+        hole.onclick = () => {
+            if (finished || !hole.classList.contains('up')) return;
+            hole.classList.remove('up');
+            hole.classList.add('bopped');
+            setTimeout(() => hole.classList.remove('bopped'), 200);
+            hole.innerText = '💫';
+            bops++;
             updateStatus();
-            if (remaining === 0) {
-                finish(true);
-            }
+            if (bops >= targetBops) finish(true);
         };
-        area.appendChild(btn);
-        feathers.push(feather);
+        grid.appendChild(hole);
+        holes.push(hole);
     }
 
-    let rafId = null;
-    function drift() {
-        feathers.forEach(f => {
-            f.x += f.vx;
-            f.y += f.vy;
-            if (f.x <= 0) { f.x = 0; f.vx = Math.abs(f.vx); }
-            if (f.x >= areaWidth - featherSize) { f.x = areaWidth - featherSize; f.vx = -Math.abs(f.vx); }
-            if (f.y <= 0) { f.y = 0; f.vy = Math.abs(f.vy); }
-            if (f.y >= areaHeight - featherSize) { f.y = areaHeight - featherSize; f.vy = -Math.abs(f.vy); }
-            f.el.style.left = f.x + 'px';
-            f.el.style.top = f.y + 'px';
-        });
-        rafId = requestAnimationFrame(drift);
+    // The duckling face: reuse the Pokemon's own art when available
+    const duckFace = (pokemon.texture && pokemon.texture.key)
+        ? `<img src="assets/${pokemon.texture.key}.png" alt="">`
+        : '🦆';
+
+    let popTimer = null;
+    let lastHole = -1;
+    function popNext() {
+        holes.forEach(h => { h.classList.remove('up'); h.innerText = ''; h.innerHTML = ''; });
+        let i = Math.floor(Math.random() * 9);
+        while (i === lastHole) i = Math.floor(Math.random() * 9);
+        lastHole = i;
+        holes[i].classList.add('up');
+        holes[i].innerHTML = duckFace;
+        popTimer = setTimeout(popNext, 900);
     }
-    rafId = requestAnimationFrame(drift);
+    popTimer = setTimeout(popNext, 500);
 
     const countdown = setInterval(() => {
         timeLeft--;
         updateStatus();
-        if (timeLeft <= 0) {
-            finish(false);
-        }
+        if (timeLeft <= 0) finish(false);
     }, 1000);
 
     function stopLoops() {
         finished = true;
-        if (rafId) cancelAnimationFrame(rafId);
-        rafId = null;
+        clearTimeout(popTimer);
         clearInterval(countdown);
     }
 
@@ -1006,6 +935,108 @@ function setupCatchPuzzle(title, options, pokemon) {
     }
 
     puzzleCleanup = stopLoops;
+}
+
+// Puzzle 6 (Ruby-wing): rhythm game — tap the drum exactly when the
+// shrinking ring closes on it; hit 4 of 6 beats
+function setupRhythmPuzzle(title, options, pokemon) {
+    title.innerText = `${pokemon.name} wants to dance! Tap the drum right when the ring closes on it.`;
+
+    const totalRings = 6;
+    const neededHits = 4;
+    const ringDuration = 1500; // ms from spawn to fully closed
+    const perfectAt = 1125;    // ms after spawn when scale passes 1.0
+    const tolerance = 220;     // ms window around the perfect moment
+
+    let hits = 0;
+    let ringsDone = 0;
+    let finished = false;
+
+    const status = document.createElement('p');
+    status.className = 'puzzle-status';
+    options.appendChild(status);
+
+    function updateStatus() {
+        status.innerText = 'Hits: ' + hits + '/' + neededHits + ' — Beats left: ' + (totalRings - ringsDone);
+    }
+    updateStatus();
+
+    const area = document.createElement('div');
+    area.className = 'rhythm-area';
+    options.appendChild(area);
+
+    const drum = document.createElement('button');
+    drum.className = 'rhythm-drum';
+    drum.innerText = '🥁';
+    area.appendChild(drum);
+
+    const timers = [];
+    let rafId = null;
+    let activeRing = null; // { el, spawnedAt, judged }
+
+    function spawnRing() {
+        const el = document.createElement('div');
+        el.className = 'rhythm-ring';
+        area.appendChild(el);
+        activeRing = { el, spawnedAt: performance.now(), judged: false };
+        timers.push(setTimeout(() => {
+            if (!activeRing || activeRing.el !== el) return;
+            if (!activeRing.judged) {
+                drum.classList.add('missed');
+                timers.push(setTimeout(() => drum.classList.remove('missed'), 200));
+            }
+            el.remove();
+            activeRing = null;
+            ringDoneCheck();
+        }, ringDuration + 150));
+    }
+
+    function ringDoneCheck() {
+        ringsDone++;
+        updateStatus();
+        if (ringsDone >= totalRings) {
+            finished = true;
+            timers.push(setTimeout(() => solvePuzzle(hits >= neededHits), 500));
+        }
+    }
+
+    // Visual shrink driven by rAF, but the click grading below uses
+    // performance.now() directly so timing stays fair even if frames drop
+    function animate() {
+        if (activeRing) {
+            const t = performance.now() - activeRing.spawnedAt;
+            const scale = Math.max(0.6, 2.2 - (1.6 / ringDuration) * t);
+            activeRing.el.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        }
+        rafId = requestAnimationFrame(animate);
+    }
+    rafId = requestAnimationFrame(animate);
+
+    drum.onclick = () => {
+        if (finished || !activeRing || activeRing.judged) return;
+        activeRing.judged = true;
+        const t = performance.now() - activeRing.spawnedAt;
+        if (Math.abs(t - perfectAt) <= tolerance) {
+            hits++;
+            drum.classList.add('hit');
+            timers.push(setTimeout(() => drum.classList.remove('hit'), 200));
+        } else {
+            drum.classList.add('missed');
+            timers.push(setTimeout(() => drum.classList.remove('missed'), 200));
+        }
+        updateStatus();
+    };
+
+    // One ring every 1.9s
+    for (let i = 0; i < totalRings; i++) {
+        timers.push(setTimeout(spawnRing, 800 + i * 1900));
+    }
+
+    puzzleCleanup = () => {
+        finished = true;
+        timers.forEach(t => clearTimeout(t));
+        if (rafId) cancelAnimationFrame(rafId);
+    };
 }
 
 function solvePuzzle(isCorrect) {

@@ -38,25 +38,27 @@ graduation ending (the current congratulations screen moves there, 6/6 Pokedex).
 |---|---|
 | Background | `assets/schoolyard_bg.jpg` — pixel-art schoolyard: school wall + door at top, playground equipment (slide/swings), trees, fence around the edges, gate at bottom center |
 | NPC | **Coach** (`assets/coach.jpg` -> `coach.png`), stands near the equipment; gives the pep talk that unlocks puzzles (mirrors the Pokedex gate in Level 1) |
-| Pokemon 4 | `Pika-spark` (electric) — puzzle `circuit` |
-| Pokemon 5 | `Psy-duckling` (psychic) — puzzle `slider` |
-| Pokemon 6 | `Flutter-bird` (flying) — puzzle `catch` |
+| Pokemon 4 | `Pika-spark` (electric) — puzzle `maze` |
+| Pokemon 5 | `Psy-duckling` (psychic) — puzzle `whack` |
+| Pokemon 6 | `Flutter-bird` (flying) — puzzle `rhythm` |
 | Entrance | Player fades in at the top, just below the school door (returning to Level 1 is not required) |
 | Exit | School gate at bottom center; blocked with a Coach dialogue until all 3 are caught, then fades to the final graduation ending screen |
 
-### New puzzle mechanics (harder than Level 1)
+### New puzzle mechanics (action mini-games, harder than Level 1)
 
-- **`circuit` (Pika-spark)** — "Reconnect the power": a 3x3 grid of node
-  buttons; a 5-step path lights up one node at a time, then the player must
-  click the nodes in the same order. Longer and spatial vs Level 1's 4-step
-  Simon.
-- **`slider` (Psy-duckling)** — 3x3 sliding-tile puzzle of the Pokemon's own
-  portrait (use the `pokemon5.png` texture as the CSS background of tiles,
-  one tile empty). Shuffle with N random valid moves so it is always solvable.
-- **`catch` (Flutter-bird)** — "Catch the feathers": 8 feather buttons drift
-  around a play area (absolute-positioned, rAF animation); click all 8 before
-  a 20-second timer runs out. Timer + movement must be torn down in
-  `puzzleCleanup`.
+(Originally circuit/slider/catch; replaced with action mini-games by request.)
+
+- **`maze` (Pika-spark)** — steady-hand game: pick up the spark by hovering
+  its start cell, then trace the mouse through a serpentine wire maze to the
+  bulb. Touching a wall zaps the spark back to the start (no fail-out).
+- **`whack` (Psy-duckling)** — whack-a-duckling: the Pokemon pops out of one
+  of 9 holes (~0.9s each); bop it 8 times within 25 seconds. Timer expiry
+  fails; uses the Pokemon's own sprite art for the pop-up face.
+- **`rhythm` (Flutter-bird)** — beat matching: rings shrink onto a drum
+  (1.5s each, 6 total); tap the drum inside a ±220ms window around the
+  moment the ring closes. 4 hits out of 6 wins. Click grading uses
+  `performance.now()` so dropped frames never punish the player. All timers
+  and the rAF loop are torn down in `puzzleCleanup`.
 
 ## Architecture decisions for the refactor
 
