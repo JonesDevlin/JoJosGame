@@ -84,22 +84,36 @@ const Music = (() => {
     }
 
     function unlock() {
-        if (unlocked) return;
-        unlocked = true;
-        ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') {
-            ctx.resume();
+        if (!ctx) {
+            ctx = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = ctx.createGain();
+            masterGain.gain.value = muted ? 0 : VOLUME;
+            masterGain.connect(ctx.destination);
         }
-        masterGain = ctx.createGain();
-        masterGain.gain.value = muted ? 0 : VOLUME;
-        masterGain.connect(ctx.destination);
-        if (pendingTrack) startTrack(pendingTrack);
+        if (unlocked) return;
+        // iOS only grants audio inside certain gestures (touchend/click, not
+        // touchstart), and a failed resume leaves the context 'suspended'
+        // forever - so retry on every gesture until it actually runs, then
+        // restart the queued track from the top
+        const finish = () => {
+            if (unlocked || ctx.state !== 'running') return;
+            unlocked = true;
+            UNLOCK_EVENTS.forEach(ev => window.removeEventListener(ev, unlock));
+            const track = pendingTrack || currentTrackName;
+            if (track) startTrack(track);
+        };
+        if (ctx.state === 'suspended') {
+            ctx.resume().then(finish).catch(() => {});
+        } else {
+            finish();
+        }
     }
 
-    // Browsers block audio until a user gesture; the game already requires
-    // keyboard input to move, so the first key press or click unlocks it
-    window.addEventListener('keydown', unlock, { once: true });
-    window.addEventListener('pointerdown', unlock, { once: true });
+    // Browsers block audio until a user gesture. Listen to both the start and
+    // end of presses: pointerdown suffices on desktop, but iOS Safari needs a
+    // completed gesture (touchend/pointerup/click) before resume() succeeds.
+    const UNLOCK_EVENTS = ['keydown', 'pointerdown', 'pointerup', 'touchend', 'click'];
+    UNLOCK_EVENTS.forEach(ev => window.addEventListener(ev, unlock));
 
     return {
         setTrack(name) {
