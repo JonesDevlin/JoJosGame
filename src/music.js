@@ -15,7 +15,7 @@ const Music = (() => {
     // Each pattern is 16 eighth-note steps; null = rest
     const TRACKS = {
         classroom: {
-            volume: 1.5,
+            volume: 2.5,
             tempo: 92,
             leadWave: 'triangle',
             bassWave: 'sine',
