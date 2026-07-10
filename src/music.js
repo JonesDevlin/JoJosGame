@@ -28,6 +28,15 @@ const Music = (() => {
             bassWave: 'triangle',
             lead: ['C4', 'D4', 'E4', 'G4', 'E4', 'G4', 'A4', 'G4', 'C5', 'G4', 'E4', 'G4', 'A4', 'G4', 'E4', 'D4'],
             bass: ['C3', 'C3', 'G3', 'G3', 'C3', 'C3', 'G3', 'G3', 'F3', 'F3', 'C4', 'C4', 'G3', 'G3', 'C3', 'C3']
+        },
+        // Triumphant fanfare for the graduation ending screen
+        victory: {
+            volume: 1.3,
+            tempo: 132,
+            leadWave: 'square',
+            bassWave: 'triangle',
+            lead: ['C5', 'C5', 'C5', 'E5', null, 'D5', 'D5', 'F5', 'E5', 'C5', 'E5', 'G5', 'C6', null, 'G5', 'C6'],
+            bass: ['C3', null, 'G3', null, 'F3', null, 'G3', null, 'C3', null, 'F3', null, 'G3', 'G3', 'C4', null]
         }
     };
 
@@ -163,6 +172,9 @@ const Music = (() => {
         },
         isMuted() {
             return muted;
+        },
+        currentTrack() {
+            return currentTrackName;
         },
         // Play one pitched note (used by the Simon pads); no-op before unlock
         tone(freq, duration = 0.25, wave = 'triangle', peak = 0.18) {

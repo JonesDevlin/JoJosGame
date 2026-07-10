@@ -384,6 +384,7 @@ class SchoolyardScene extends Phaser.Scene {
                 this.interactHint.setVisible(false);
                 this.cameras.main.fadeOut(900, 0, 0, 0);
                 this.cameras.main.once('camerafadeoutcomplete', () => {
+                    Music.setTrack('victory'); // fanfare for the graduation screen
                     document.getElementById('ending-ui').classList.remove('hidden');
                 });
                 return;
