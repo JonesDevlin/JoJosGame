@@ -82,6 +82,20 @@ characters) and document exactly which files to replace. The project owner
 generates the real AI art in the established style and re-runs
 `node scripts/remove_bg.js`.
 
+**Update:** real AI art (via the Pollinations MCP image tool) has replaced the
+placeholders for the schoolyard background, Coach, all three yard Pokemon, and
+Mimi-Q. `scripts/remove_bg.js` now excludes any `*_bg.jpg` (not just
+`classroom_bg.jpg`) so background scenes never get run through the
+character-cutout pipeline. The real background is 1024x1024 (not 1376x768);
+canvas coords = image coords * 0.78125 (x) / 0.5859375 (y). All
+SchoolyardScene coordinates (world bounds, NPC positions, obstacle colliders,
+`SCHOOLYARD_EXIT`) were re-derived from the actual art via pixel probing —
+see the comment above `class SchoolyardScene` in `src/game.js` for the
+resulting image-space landmarks. `scripts/import_ai_art.js` documents how the
+generated files were pulled from the MCP server's output folder into
+`assets/`; `scripts/make_placeholder_yard.js` is kept for reference/history
+but its output is no longer used.
+
 ## Task breakdown (see session task list)
 
 1. **Multi-scene refactor** (foundation — blocks most other work)

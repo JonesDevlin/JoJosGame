@@ -12,7 +12,7 @@ let lastInteract = 0;
 const CLASSROOM_TOTAL = 3;
 const SCHOOLYARD_TOTAL = 6; // full Pokedex: 3 classroom + 3 yard Pokemon
 const CLASSROOM_EXIT = { y: 535, minX: 350, maxX: 450 };
-const SCHOOLYARD_EXIT = { y: 530, minX: 350, maxX: 450 };
+const SCHOOLYARD_EXIT = { y: 516, minX: 334, maxX: 460 };
 
 // ---- Shared scene helpers ----
 
@@ -245,21 +245,24 @@ class ClassroomScene extends Phaser.Scene {
 }
 
 // Level 2: the schoolyard at recess — Coach and 3 rowdier Pokemon.
-// Background layout lives in scripts/make_placeholder_yard.js (image coords
-// map to canvas via x*0.5814, y*0.78125): school wall+door at top, fence with
-// a bottom-center gate, sandbox left-center, trees right side.
+// Background is assets/schoolyard_bg.jpg (AI-generated, 1024x1024; canvas
+// coords = image coords * 0.78125 (x) / 0.5859375 (y)): school wall+door at
+// top (grass starts at image y=384 -> canvas y=225), a single tree upper
+// right (image x706-979,y236-650), a sandbox left-center (image x227-423,
+// y590-734), and a fence with a gate gap at image x428-589 (canvas x334-460)
+// running along the bottom at image y~780-880 (canvas y~457-516).
 class SchoolyardScene extends Phaser.Scene {
     constructor() {
         super('SchoolyardScene');
     }
 
     preload() {
-        this.load.image('yard_bg', 'assets/schoolyard_bg.jpg?v=1');
-        this.load.image('coach', 'assets/coach.png?v=1');
-        this.load.image('pokemon4', 'assets/pokemon4.png?v=2');
-        this.load.image('pokemon5', 'assets/pokemon5.png?v=2');
-        this.load.image('pokemon6', 'assets/pokemon6.png?v=2');
-        this.load.image('mimi', 'assets/mimi.png?v=1');
+        this.load.image('yard_bg', 'assets/schoolyard_bg.jpg?v=2');
+        this.load.image('coach', 'assets/coach.png?v=2');
+        this.load.image('pokemon4', 'assets/pokemon4.png?v=3');
+        this.load.image('pokemon5', 'assets/pokemon5.png?v=3');
+        this.load.image('pokemon6', 'assets/pokemon6.png?v=3');
+        this.load.image('mimi', 'assets/mimi.png?v=2');
     }
 
     create() {
@@ -274,12 +277,13 @@ class SchoolyardScene extends Phaser.Scene {
         bg.setDisplaySize(800, 600);
 
         // Coach stands beside the sandbox, keeping an eye on recess
-        this.coach = createNpc(this, 300, 300, 'coach', 100, 46, 62, 20);
+        this.coach = createNpc(this, 300, 260, 'coach', 100, 46, 62, 20);
 
-        // The three yard Pokemon, spread around the field
-        const p4 = createNpc(this, 160, 470, 'pokemon4', 64, 28, 48, 16);
-        const p5 = createNpc(this, 500, 480, 'pokemon5', 64, 28, 48, 16);
-        const p6 = createNpc(this, 600, 280, 'pokemon6', 64, 28, 48, 16);
+        // The three yard Pokemon, spread around the field clear of the tree
+        // and sandbox art
+        const p4 = createNpc(this, 150, 300, 'pokemon4', 64, 28, 48, 16);
+        const p5 = createNpc(this, 580, 430, 'pokemon5', 64, 28, 48, 16);
+        const p6 = createNpc(this, 730, 270, 'pokemon6', 64, 28, 48, 16);
         p4.name = 'Ruby-spark';
         p5.name = 'Ruby-scale';
         p6.name = 'Ruby-wing';
@@ -293,8 +297,8 @@ class SchoolyardScene extends Phaser.Scene {
 
         // Mimi-Q pedals its bicycle back and forth across the yard (pure
         // decoration + a chat, not part of the Pokedex — no physics body)
-        this.mimiShadow = this.add.ellipse(110, 468, 56, 14, 0x000000, 0.22);
-        this.mimi = this.add.sprite(110, 433, 'mimi');
+        this.mimiShadow = this.add.ellipse(110, 465, 56, 14, 0x000000, 0.22);
+        this.mimi = this.add.sprite(110, 430, 'mimi');
         this.mimi.setDisplaySize(78, 78);
         this.mimi.name = 'Mimi-Q';
         this.tweens.add({
@@ -309,11 +313,12 @@ class SchoolyardScene extends Phaser.Scene {
         });
 
         // Player fades in at the top center, just below the school door
-        this.playerShadow = this.add.ellipse(400, 212, 52, 17, 0x000000, 0.22);
-        this.player = createPlayer(this, 400, 170);
+        this.playerShadow = this.add.ellipse(400, 252, 52, 17, 0x000000, 0.22);
+        this.player = createPlayer(this, 400, 260);
 
-        // Keep the player inside the fence (top = school wall base)
-        this.physics.world.setBounds(40, 150, 720, 435);
+        // Keep the player inside the fence (top = school wall base, bottom
+        // gives a little room past the gate's y for the exit-zone check)
+        this.physics.world.setBounds(40, 225, 720, 335);
 
         // Invisible static colliders matching the background art
         const obstacles = this.physics.add.staticGroup();
@@ -322,13 +327,11 @@ class SchoolyardScene extends Phaser.Scene {
             this.physics.add.existing(r, true);
             obstacles.add(r);
         };
-        addObstacle(204, 336, 140, 120);  // sandbox (image 230-470 x 350-510)
-        addObstacle(669, 205, 100, 80);   // tree canopy 1 (image 1150,250)
-        addObstacle(715, 375, 90, 70);    // tree canopy 2 (image 1230,470)
-        addObstacle(628, 480, 80, 60);    // tree canopy 3 (image 1080,620)
-        // Bottom fence, split by the gate opening (canvas x 350-450)
-        addObstacle(195, 585, 310, 40);   // fence left of gate
-        addObstacle(605, 585, 310, 40);   // fence right of gate
+        addObstacle(254, 388, 150, 85);   // sandbox (image x227-423, y590-734)
+        addObstacle(658, 300, 110, 130);  // the yard's single tree (image x706-979, y236-650)
+        // Bottom fence, split by the gate opening (canvas x334-460)
+        addObstacle(187, 487, 294, 60);   // fence left of gate
+        addObstacle(610, 487, 300, 60);   // fence right of gate
         this.physics.add.collider(this.player, obstacles);
 
         this.interactHint = createInteractHint(this);

@@ -39,7 +39,7 @@ async function trimToSquare(buffer) {
 }
 
 async function processImage(filename) {
-    if (!filename.endsWith('.jpg') || filename === 'classroom_bg.jpg') return;
+    if (!filename.endsWith('.jpg') || filename.endsWith('_bg.jpg')) return;
 
     const inputPath = path.join(assetsDir, filename);
     const outputPath = path.join(assetsDir, filename.replace('.jpg', '.png'));
