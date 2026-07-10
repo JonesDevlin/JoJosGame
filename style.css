@@ -6,27 +6,47 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
     color: white;
     font-family: 'Courier New', Courier, monospace;
 }
 
+/* Sized to the same 4:3 rect Phaser's FIT mode computes, so the canvas
+   fills the container exactly and the HUD children anchored to the
+   container's corners stay pinned to the visible canvas. */
 #game-container {
     box-shadow: 0 0 20px rgba(0,0,0,0.8);
     position: relative;
+    width: min(100vw, calc(100vh * (800 / 600)));
+    width: min(100dvw, calc(100dvh * (800 / 600)));
+    aspect-ratio: 800 / 600;
+    container-type: inline-size;
+}
+/* Kill the inline-canvas baseline gap so the canvas fills the container
+   exactly and Phaser's centering margins stay at zero */
+#game-container canvas {
+    display: block;
 }
 
 #dialogue-ui {
     position: absolute;
-    top: 15%;
+    /* Anchor the top edge (old rule centered on 15%, which clips when the
+       text wraps tall on narrow screens); -80px approximates the old spot */
+    top: max(12px, calc(15% - 80px));
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     background: rgba(30, 30, 80, 0.95);
     border: 4px solid #fff;
     border-radius: 10px;
     padding: 20px;
     text-align: center;
-    width: 80%;
-    max-width: 600px;
+    box-sizing: border-box;
+    width: min(92vw, 648px);
     z-index: 20;
 }
 
@@ -54,6 +74,10 @@ body {
     padding: 20px;
     text-align: center;
     width: 300px;
+    max-width: calc(92vw - 48px);
+    max-height: calc(94vh - 48px);
+    max-height: calc(94dvh - 48px);
+    overflow-y: auto;
     z-index: 10;
 }
 
@@ -65,10 +89,10 @@ body {
    opacity transition. Never blocks input (pointer-events: none). */
 #level-title {
     position: absolute;
-    top: 40px;
+    top: max(40px, env(safe-area-inset-top));
     left: 50%;
     transform: translateX(-50%);
-    font-size: 42px;
+    font-size: clamp(18px, 5.25cqw, 42px);
     font-weight: bold;
     letter-spacing: 3px;
     white-space: nowrap;
@@ -86,8 +110,8 @@ body {
 /* Pokedex HUD counter: always visible, below the dialogue/puzzle overlays */
 #pokedex-hud {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
     padding: 6px 12px;
     background: rgba(20, 20, 50, 0.8);
     border: 2px solid #ffd54f;
@@ -101,8 +125,8 @@ body {
 
 #music-toggle {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: max(10px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
     padding: 6px 10px;
     background: rgba(20, 20, 50, 0.8);
     border: 2px solid #ffd54f;
@@ -126,8 +150,11 @@ body {
     border-radius: 10px;
     padding: 30px 40px;
     text-align: center;
-    width: 80%;
-    max-width: 500px;
+    box-sizing: border-box;
+    width: min(92vw, 588px);
+    max-height: 92vh;
+    max-height: 92dvh;
+    overflow-y: auto;
     z-index: 30;
 }
 #ending-ui h1 {
@@ -377,4 +404,49 @@ button.puzzle-btn:hover {
 }
 #puzzle-close:hover {
     background-color: #d32f2f;
+}
+
+/* "Rotate your phone" hint: portrait touch screens only, never blocks input */
+#rotate-hint {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    padding: 8px 14px;
+    background: rgba(20, 20, 50, 0.85);
+    border: 2px solid #ffd54f;
+    border-radius: 8px;
+    color: #ffd54f;
+    font-size: 14px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 40;
+}
+@media (orientation: portrait) and (pointer: coarse) {
+    #rotate-hint {
+        display: block;
+    }
+}
+
+/* Short screens (phone landscape): tighten the overlay boxes so their
+   buttons stay on-screen instead of behind a scrollbar */
+@media (max-height: 480px) {
+    #dialogue-ui,
+    #puzzle-ui {
+        padding: 12px;
+    }
+    #puzzle-ui {
+        max-width: calc(92vw - 32px);
+        max-height: calc(96vh - 32px);
+        max-height: calc(96dvh - 32px);
+    }
+    #dialogue-ui h2,
+    #puzzle-ui h2 {
+        font-size: 16px;
+        margin: 4px 0 8px;
+    }
+    #puzzle-close {
+        margin-top: 8px;
+    }
 }

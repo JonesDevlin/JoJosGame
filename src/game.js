@@ -415,10 +415,16 @@ class SchoolyardScene extends Phaser.Scene {
 
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
     parent: 'game-container',
     pixelArt: true,
+    // Letterbox the fixed 800x600 world onto any screen; gameplay
+    // coordinates stay in the same 800x600 space
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: 800,
+        height: 600
+    },
     physics: {
         default: 'arcade',
         arcade: {

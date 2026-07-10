@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <title>Pokemon Academy</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
 <body>
@@ -33,8 +33,10 @@
         <p>You made all 6 Pokemon happy and graduated from the Pokemon Academy!</p>
         <button id="ending-restart" onclick="location.reload()">Play Again</button>
     </div>
+    <!-- Rotate hint: CSS shows it only in portrait on touch devices -->
+    <div id="rotate-hint">&#128241; Rotate your phone for a bigger view</div>
     <script src="src/music.js?v=1"></script>
-    <script src="src/game.js?v=16"></script>
+    <script src="src/game.js?v=17"></script>
 
 </body>
 </html>
