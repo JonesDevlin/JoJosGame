@@ -271,6 +271,11 @@ button.puzzle-btn:hover {
 .maze-cell.path {
     background: #3949ab;
 }
+.maze-cell.lit {
+    background: #ffeb3b;
+    box-shadow: 0 0 8px #ffeb3b;
+    z-index: 1;
+}
 .maze-cell.start {
     background: #43a047;
 }

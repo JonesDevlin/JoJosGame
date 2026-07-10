@@ -15,6 +15,7 @@ const Music = (() => {
     // Each pattern is 16 eighth-note steps; null = rest
     const TRACKS = {
         classroom: {
+            volume: 1.5,
             tempo: 92,
             leadWave: 'triangle',
             bassWave: 'sine',
@@ -64,10 +65,11 @@ const Music = (() => {
         const track = TRACKS[currentTrackName];
         if (!track) return;
         const stepDuration = 60 / track.tempo / 2; // eighth notes
+        const vol = track.volume || 1.0;
         while (nextNoteTime < ctx.currentTime + SCHEDULE_AHEAD) {
             const i = step % track.lead.length;
-            scheduleNote(noteToFreq(track.lead[i]), track.leadWave, nextNoteTime, stepDuration * 0.9, 0.09);
-            scheduleNote(noteToFreq(track.bass[i]), track.bassWave, nextNoteTime, stepDuration * 1.8, 0.07);
+            scheduleNote(noteToFreq(track.lead[i]), track.leadWave, nextNoteTime, stepDuration * 0.9, 0.09 * vol);
+            scheduleNote(noteToFreq(track.bass[i]), track.bassWave, nextNoteTime, stepDuration * 1.8, 0.07 * vol);
             nextNoteTime += stepDuration;
             step++;
         }
@@ -85,6 +87,9 @@ const Music = (() => {
         if (unlocked) return;
         unlocked = true;
         ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
         masterGain = ctx.createGain();
         masterGain.gain.value = muted ? 0 : VOLUME;
         masterGain.connect(ctx.destination);

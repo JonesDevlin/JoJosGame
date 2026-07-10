@@ -483,10 +483,17 @@ function updatePokedexHud(count) {
 // the async preload, so these hooks attach in time for the first create.
 game.events.once(Phaser.Core.Events.READY, () => {
     game.scene.scenes.forEach(s => {
-        s.sys.events.on(Phaser.Scenes.Events.CREATE, () => {
+        const initScene = () => {
+            if (s.sys.sceneInitialized) return;
+            s.sys.sceneInitialized = true;
             showLevelTitle(s.scene.key);
             Music.setTrack(LEVEL_TRACKS[s.scene.key]);
-        });
+        };
+        s.sys.events.on(Phaser.Scenes.Events.CREATE, initScene);
+        // If assets were cached, CREATE may have fired synchronously before this hook
+        if (s.sys.settings.status >= 5) { // RUNNING
+            initScene();
+        }
     });
     updatePokedexHud(game.registry.get('caughtCount'));
 });
@@ -924,6 +931,7 @@ function setupMazePuzzle(title, options, pokemon) {
         setTimeout(() => grid.classList.remove('zapped'), 250);
         startCell.innerText = '⚡';
         status.innerText = 'Bzzt! Back to the start...';
+        Array.from(grid.querySelectorAll('.lit')).forEach(c => c.classList.remove('lit'));
     }
 
     layout.forEach(row => {
@@ -945,8 +953,11 @@ function setupMazePuzzle(title, options, pokemon) {
                     tracing = true;
                     startCell.innerText = '';
                     status.innerText = 'Careful... guide it to the bulb!';
+                    Array.from(grid.querySelectorAll('.lit')).forEach(c => c.classList.remove('lit'));
                 } else if (ch === '#') {
                     if (tracing) resetSpark();
+                } else if (ch === '.' && tracing) {
+                    cell.classList.add('lit');
                 } else if (ch === 'G' && tracing) {
                     done = true;
                     cell.innerText = '✨';
