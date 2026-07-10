@@ -6,6 +6,7 @@ let cursors;
 let pokemons = [];
 let puzzleActive = false;
 let dialogueActive = false;
+let currentSpeechAudio = null;
 let currentPokemon = null;
 let lastInteract = 0;
 
@@ -441,6 +442,10 @@ document.getElementById('dialogue-close').addEventListener('click', () => {
 document.getElementById('music-toggle').addEventListener('click', (e) => {
     const muted = Music.toggleMute();
     e.target.innerHTML = muted ? '&#128263;' : '&#128266;';
+    if (muted && currentSpeechAudio) {
+        currentSpeechAudio.pause();
+        currentSpeechAudio = null;
+    }
 });
 
 // ---- Level chrome: title cards + Pokedex HUD (global, outside the scenes) ----
@@ -577,12 +582,97 @@ function showDialogue(text) {
         cursors.up.reset();
         cursors.down.reset();
     }
+
+    // Stop any currently playing speech
+    if (currentSpeechAudio) {
+        currentSpeechAudio.pause();
+        currentSpeechAudio = null;
+    }
+
+    // Check if the dialogue is from the Professor and play generated speech if not muted
+    if (text.startsWith("Professor:") && !Music.isMuted()) {
+        let audioSrc = null;
+        if (text.includes("Welcome to the Academy")) {
+            audioSrc = 'assets/audio/prof_welcome.mp3';
+        } else if (text.includes("You still have")) {
+            if (text.includes("3")) {
+                audioSrc = 'assets/audio/prof_catch_3.mp3';
+            } else if (text.includes("2")) {
+                audioSrc = 'assets/audio/prof_catch_2.mp3';
+            } else if (text.includes("1")) {
+                audioSrc = 'assets/audio/prof_catch_1.mp3';
+            }
+        } else if (text.includes("Amazing! You completed the Pokedex")) {
+            audioSrc = 'assets/audio/prof_amazing.mp3';
+        } else if (text.includes("Class is in session")) {
+            audioSrc = 'assets/audio/prof_session.mp3';
+        } else if (text.includes("Not so fast!")) {
+            if (text.includes("3")) {
+                audioSrc = 'assets/audio/prof_not_so_fast_3.mp3';
+            } else if (text.includes("2")) {
+                audioSrc = 'assets/audio/prof_not_so_fast_2.mp3';
+            } else if (text.includes("1")) {
+                audioSrc = 'assets/audio/prof_not_so_fast_1.mp3';
+            }
+        }
+
+        if (audioSrc) {
+            currentSpeechAudio = new Audio(audioSrc);
+            currentSpeechAudio.volume = 0.8;
+            currentSpeechAudio.play().catch(err => console.log("Speech audio play failed:", err));
+        }
+    } else if (text.startsWith("Coach:") && !Music.isMuted()) {
+        let audioSrc = null;
+        if (text.includes("Welcome to recess")) {
+            audioSrc = 'assets/audio/coach_welcome.mp3';
+        } else if (text.includes("Outstanding hustle")) {
+            audioSrc = 'assets/audio/coach_hustle.mp3';
+        } else if (text.includes("Keep that energy up")) {
+            if (text.includes("3")) {
+                audioSrc = 'assets/audio/coach_keep_up_3.mp3';
+            } else if (text.includes("2")) {
+                audioSrc = 'assets/audio/coach_keep_up_2.mp3';
+            } else if (text.includes("1")) {
+                audioSrc = 'assets/audio/coach_keep_up_1.mp3';
+            }
+        } else if (text.includes("Recess isn't over")) {
+            if (text.includes("3")) {
+                audioSrc = 'assets/audio/coach_recess_not_over_3.mp3';
+            } else if (text.includes("2")) {
+                audioSrc = 'assets/audio/coach_recess_not_over_2.mp3';
+            } else if (text.includes("1")) {
+                audioSrc = 'assets/audio/coach_recess_not_over_1.mp3';
+            }
+        }
+
+        if (audioSrc) {
+            currentSpeechAudio = new Audio(audioSrc);
+            currentSpeechAudio.volume = 0.8;
+            currentSpeechAudio.play().catch(err => console.log("Speech audio play failed:", err));
+        }
+    } else if (text.startsWith("Mimi-Q:") && !Music.isMuted()) {
+        let audioSrc = null;
+        if (text.includes("helmet hair")) {
+            audioSrc = 'assets/audio/mimi_hair.mp3';
+        }
+
+        if (audioSrc) {
+            currentSpeechAudio = new Audio(audioSrc);
+            currentSpeechAudio.volume = 0.8;
+            currentSpeechAudio.play().catch(err => console.log("Speech audio play failed:", err));
+        }
+    }
 }
 
 function hideDialogue() {
     dialogueActive = false;
     lastInteract = Date.now(); // reset cooldown WHEN they close it
     document.getElementById('dialogue-ui').classList.add('hidden');
+
+    if (currentSpeechAudio) {
+        currentSpeechAudio.pause();
+        currentSpeechAudio = null;
+    }
 }
 
 // Set by each puzzle so hidePuzzle can stop its timers/animation loops

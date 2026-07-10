@@ -106,6 +106,9 @@ const Music = (() => {
             muted = !muted;
             if (masterGain) masterGain.gain.value = muted ? 0 : VOLUME;
             return muted;
+        },
+        isMuted() {
+            return muted;
         }
     };
 })();
