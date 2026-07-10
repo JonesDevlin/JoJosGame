@@ -141,6 +141,68 @@ body {
     background: rgba(30, 30, 70, 0.9);
 }
 
+/* Virtual touch controls (T2): D-pad bottom-left, "A" interact button
+   bottom-right, anchored inside #game-container so they track the canvas.
+   Hidden by default; shown only when the primary pointer is coarse (touch).
+   z-index 6: above the HUD (5) but below puzzle (10) and dialogue (20). */
+#touch-dpad,
+#touch-interact {
+    display: none;
+}
+@media (pointer: coarse) {
+    #touch-dpad { display: grid; }
+    #touch-interact { display: block; }
+}
+/* Test/debug hook: forces the controls visible on any pointer type */
+body.force-touch #touch-dpad { display: grid; }
+body.force-touch #touch-interact { display: block; }
+
+.touch-btn {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    background: rgba(20, 20, 50, 0.35);
+    border: 2px solid rgba(255, 213, 79, 0.6);
+    border-radius: 12px;
+    color: rgba(255, 213, 79, 0.9);
+    font-family: inherit;
+    font-size: 22px;
+    font-weight: bold;
+    padding: 0;
+    cursor: pointer;
+}
+.touch-btn.pressed {
+    background: rgba(60, 60, 130, 0.7);
+    border-color: #ffd54f;
+    color: #ffd54f;
+}
+
+#touch-dpad {
+    position: absolute;
+    left: calc(12px + env(safe-area-inset-left, 0px));
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    grid-template-columns: repeat(3, 56px);
+    grid-template-rows: repeat(3, 56px);
+    gap: 4px;
+    z-index: 6;
+}
+#dpad-up    { grid-area: 1 / 2; }
+#dpad-left  { grid-area: 2 / 1; }
+#dpad-right { grid-area: 2 / 3; }
+#dpad-down  { grid-area: 3 / 2; }
+
+#touch-interact {
+    position: absolute;
+    right: calc(16px + env(safe-area-inset-right, 0px));
+    bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    font-size: 26px;
+    z-index: 6;
+}
+
 #ending-ui {
     position: absolute;
     top: 50%;

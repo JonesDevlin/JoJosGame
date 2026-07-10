@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <title>Pokemon Academy</title>
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
 <body>
@@ -15,6 +15,14 @@
         <div id="pokedex-hud">Pokedex: 0/6</div>
         <!-- Background music mute toggle -->
         <button id="music-toggle" title="Toggle music">&#128266;</button>
+        <!-- Virtual touch controls: shown only on coarse-pointer devices via CSS -->
+        <div id="touch-dpad">
+            <button type="button" class="touch-btn" id="dpad-up" aria-label="Move up">&#9650;</button>
+            <button type="button" class="touch-btn" id="dpad-left" aria-label="Move left">&#9664;</button>
+            <button type="button" class="touch-btn" id="dpad-right" aria-label="Move right">&#9654;</button>
+            <button type="button" class="touch-btn" id="dpad-down" aria-label="Move down">&#9660;</button>
+        </div>
+        <button type="button" class="touch-btn" id="touch-interact" aria-label="Interact">A</button>
     </div>
     <!-- Dialogue UI Overlay -->
     <div id="dialogue-ui" class="hidden">
@@ -36,7 +44,7 @@
     <!-- Rotate hint: CSS shows it only in portrait on touch devices -->
     <div id="rotate-hint">&#128241; Rotate your phone for a bigger view</div>
     <script src="src/music.js?v=1"></script>
-    <script src="src/game.js?v=17"></script>
+    <script src="src/game.js?v=18"></script>
 
 </body>
 </html>

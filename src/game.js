@@ -10,6 +10,17 @@ let currentSpeechAudio = null;
 let currentPokemon = null;
 let lastInteract = 0;
 
+// State of the on-screen touch controls (D-pad + "A" button in index.html).
+// Directions are level-based (held), interactPending is edge-based: set on
+// tap, consumed once by consumeVirtualInteract() so one tap = one interaction.
+const virtualInput = { up: false, down: false, left: false, right: false, interactPending: false };
+
+function consumeVirtualInteract() {
+    const pending = virtualInput.interactPending;
+    virtualInput.interactPending = false;
+    return pending;
+}
+
 const CLASSROOM_TOTAL = 3;
 const SCHOOLYARD_TOTAL = 6; // full Pokedex: 3 classroom + 3 yard Pokemon
 const CLASSROOM_EXIT = { y: 535, minX: 350, maxX: 450 };
@@ -65,13 +76,17 @@ function inExitZone(sprite, zone) {
     return sprite.y > zone.y && sprite.x > zone.minX && sprite.x < zone.maxX;
 }
 
-// Space closes an open dialogue; returns true while an overlay blocks gameplay
+// Space (or a virtual A tap) closes an open dialogue; returns true while an
+// overlay blocks gameplay
 function overlayBlocking(scene) {
-    if (dialogueActive && Phaser.Input.Keyboard.JustDown(scene.interactKey)) {
+    if (dialogueActive && (Phaser.Input.Keyboard.JustDown(scene.interactKey) || consumeVirtualInteract())) {
         hideDialogue();
         return true; // Prevent triggering interactions in the same frame
     }
     if (puzzleActive || dialogueActive) {
+        // Drop any stale A tap made while blocked so it can't fire a ghost
+        // interaction on the frame after the overlay closes
+        virtualInput.interactPending = false;
         scene.player.setVelocity(0);
         scene.interactHint.setVisible(false);
         return true;
@@ -83,15 +98,15 @@ function updatePlayerMovement(scene) {
     const speed = 200;
     scene.player.setVelocity(0);
 
-    if (scene.cursors.left.isDown) {
+    if (scene.cursors.left.isDown || virtualInput.left) {
         scene.player.setVelocityX(-speed);
-    } else if (scene.cursors.right.isDown) {
+    } else if (scene.cursors.right.isDown || virtualInput.right) {
         scene.player.setVelocityX(speed);
     }
 
-    if (scene.cursors.up.isDown) {
+    if (scene.cursors.up.isDown || virtualInput.up) {
         scene.player.setVelocityY(-speed);
-    } else if (scene.cursors.down.isDown) {
+    } else if (scene.cursors.down.isDown || virtualInput.down) {
         scene.player.setVelocityY(speed);
     }
 }
@@ -231,7 +246,7 @@ class ClassroomScene extends Phaser.Scene {
         updatePlayerMovement(this);
 
         // Interaction with Spacebar
-        if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+        if (Phaser.Input.Keyboard.JustDown(this.interactKey) || consumeVirtualInteract()) {
             if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.teacher.x, this.teacher.y) < 80) {
                 interactTeacher();
             } else {
@@ -397,7 +412,7 @@ class SchoolyardScene extends Phaser.Scene {
         updatePlayerMovement(this);
 
         // Interaction with Spacebar
-        if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+        if (Phaser.Input.Keyboard.JustDown(this.interactKey) || consumeVirtualInteract()) {
             if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.coach.x, this.coach.y) < 80) {
                 interactCoach();
             } else if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.mimi.x, this.mimi.y) < 80) {
@@ -458,6 +473,43 @@ document.getElementById('music-toggle').addEventListener('click', (e) => {
         currentSpeechAudio = null;
     }
 });
+
+// ---- Virtual touch controls (buttons live in index.html, shown via CSS on
+// coarse-pointer devices). Each button tracks its own pointer so holding a
+// direction while tapping A works (multi-touch). ----
+
+function bindDpadButton(id, dir) {
+    const btn = document.getElementById(id);
+    const press = (e) => {
+        e.preventDefault(); // no focus steal / synthetic mouse events
+        virtualInput[dir] = true;
+        btn.classList.add('pressed');
+    };
+    const release = () => {
+        virtualInput[dir] = false;
+        btn.classList.remove('pressed');
+    };
+    btn.addEventListener('pointerdown', press);
+    btn.addEventListener('pointerup', release);
+    btn.addEventListener('pointercancel', release);
+    btn.addEventListener('pointerleave', release);
+    btn.addEventListener('contextmenu', (e) => e.preventDefault()); // long-press
+}
+bindDpadButton('dpad-up', 'up');
+bindDpadButton('dpad-down', 'down');
+bindDpadButton('dpad-left', 'left');
+bindDpadButton('dpad-right', 'right');
+
+const interactBtn = document.getElementById('touch-interact');
+interactBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    virtualInput.interactPending = true;
+    interactBtn.classList.add('pressed');
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => {
+    interactBtn.addEventListener(ev, () => interactBtn.classList.remove('pressed'));
+});
+interactBtn.addEventListener('contextmenu', (e) => e.preventDefault());
 
 // ---- Level chrome: title cards + Pokedex HUD (global, outside the scenes) ----
 
@@ -685,6 +737,7 @@ function showDialogue(text) {
 function hideDialogue() {
     dialogueActive = false;
     lastInteract = Date.now(); // reset cooldown WHEN they close it
+    virtualInput.interactPending = false; // drop any tap queued while open
     document.getElementById('dialogue-ui').classList.add('hidden');
 
     if (currentSpeechAudio) {
@@ -1208,6 +1261,7 @@ function hidePuzzle() {
     puzzleActive = false;
     currentPokemon = null;
     lastInteract = Date.now(); // reset cooldown WHEN they close it
+    virtualInput.interactPending = false; // drop any tap queued while open
     if (puzzleCleanup) {
         puzzleCleanup();
         puzzleCleanup = null;
