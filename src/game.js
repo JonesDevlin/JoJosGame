@@ -924,6 +924,7 @@ function setupMazePuzzle(title, options, pokemon) {
     let done = false;
     let finishTimer = null;
     let startCell = null;
+    let lastCell = null;
 
     function resetSpark() {
         tracing = false;
@@ -938,6 +939,7 @@ function setupMazePuzzle(title, options, pokemon) {
         [...row].forEach(ch => {
             const cell = document.createElement('div');
             cell.className = 'maze-cell ' + (ch === '#' ? 'wall' : 'path');
+            cell.dataset.ch = ch;
             if (ch === 'S') {
                 cell.classList.add('start');
                 cell.innerText = '⚡';
@@ -947,29 +949,52 @@ function setupMazePuzzle(title, options, pokemon) {
                 cell.classList.add('goal');
                 cell.innerText = '💡';
             }
-            cell.onmouseenter = () => {
-                if (done) return;
-                if (ch === 'S') {
-                    tracing = true;
-                    startCell.innerText = '';
-                    status.innerText = 'Careful... guide it to the bulb!';
-                    Array.from(grid.querySelectorAll('.lit')).forEach(c => c.classList.remove('lit'));
-                } else if (ch === '#') {
-                    if (tracing) resetSpark();
-                } else if (ch === '.' && tracing) {
-                    cell.classList.add('lit');
-                } else if (ch === 'G' && tracing) {
-                    done = true;
-                    cell.innerText = '✨';
-                    status.innerText = 'The bulb lit up!';
-                    finishTimer = setTimeout(() => solvePuzzle(true), 600);
-                }
-            };
             grid.appendChild(cell);
         });
     });
 
-    puzzleCleanup = () => clearTimeout(finishTimer);
+    // Fires once per cell "entered" (mouse hover or finger drag alike)
+    function enterCell(cell) {
+        if (done || cell === lastCell) return;
+        lastCell = cell;
+        const ch = cell.dataset.ch;
+        if (ch === 'S') {
+            tracing = true;
+            startCell.innerText = '';
+            status.innerText = 'Careful... guide it to the bulb!';
+            Array.from(grid.querySelectorAll('.lit')).forEach(c => c.classList.remove('lit'));
+        } else if (ch === '#') {
+            if (tracing) resetSpark();
+        } else if (ch === '.' && tracing) {
+            cell.classList.add('lit');
+        } else if (ch === 'G' && tracing) {
+            done = true;
+            cell.innerText = '✨';
+            status.innerText = 'The bulb lit up!';
+            finishTimer = setTimeout(() => solvePuzzle(true), 600);
+        }
+    }
+
+    // Grid-level pointer handling: per-cell mouseenter never fires for a
+    // finger drag, so resolve the cell under the pointer by coordinates.
+    // pointermove also fires for plain mouse hover, keeping desktop play.
+    function handlePointer(e) {
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        if (target && target.parentElement === grid) enterCell(target);
+    }
+    function clearLastCell() {
+        lastCell = null;
+    }
+    grid.addEventListener('pointerdown', handlePointer);
+    grid.addEventListener('pointermove', handlePointer);
+    grid.addEventListener('pointerleave', clearLastCell);
+
+    puzzleCleanup = () => {
+        clearTimeout(finishTimer);
+        grid.removeEventListener('pointerdown', handlePointer);
+        grid.removeEventListener('pointermove', handlePointer);
+        grid.removeEventListener('pointerleave', clearLastCell);
+    };
 }
 
 // Puzzle 5 (Ruby-scale): whack-a-dragon — it pops out of holes, bop it

@@ -256,6 +256,7 @@ button.puzzle-btn:hover {
     border-radius: 6px;
     width: fit-content;
     background: #1a237e;
+    touch-action: none; /* finger tracing must not scroll the page */
 }
 .maze-cell {
     width: 28px;
@@ -284,6 +285,21 @@ button.puzzle-btn:hover {
 }
 .maze-grid.zapped {
     animation: maze-shake 0.25s;
+}
+/* Fingertip-sized maze corridor on touch screens */
+@media (pointer: coarse) {
+    #puzzle-ui {
+        width: min(92vw, 360px);
+    }
+    .maze-grid {
+        grid-template-columns: repeat(9, 36px);
+    }
+    .maze-cell {
+        width: 36px;
+        height: 36px;
+        font-size: 22px;
+        line-height: 36px;
+    }
 }
 @keyframes maze-shake {
     25% { transform: translateX(-4px); }
