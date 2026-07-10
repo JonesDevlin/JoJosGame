@@ -438,12 +438,21 @@ document.getElementById('puzzle-close').addEventListener('click', () => {
 document.getElementById('dialogue-close').addEventListener('click', () => {
     hideDialogue();
 });
+document.getElementById('music-toggle').addEventListener('click', (e) => {
+    const muted = Music.toggleMute();
+    e.target.innerHTML = muted ? '&#128263;' : '&#128266;';
+});
 
 // ---- Level chrome: title cards + Pokedex HUD (global, outside the scenes) ----
 
 const LEVEL_TITLES = {
     ClassroomScene: 'Room 123',
     SchoolyardScene: 'Level 2: The Schoolyard'
+};
+
+const LEVEL_TRACKS = {
+    ClassroomScene: 'classroom',
+    SchoolyardScene: 'schoolyard'
 };
 
 let levelTitleTimer = null;
@@ -469,7 +478,10 @@ function updatePokedexHud(count) {
 // the async preload, so these hooks attach in time for the first create.
 game.events.once(Phaser.Core.Events.READY, () => {
     game.scene.scenes.forEach(s => {
-        s.sys.events.on(Phaser.Scenes.Events.CREATE, () => showLevelTitle(s.scene.key));
+        s.sys.events.on(Phaser.Scenes.Events.CREATE, () => {
+            showLevelTitle(s.scene.key);
+            Music.setTrack(LEVEL_TRACKS[s.scene.key]);
+        });
     });
     updatePokedexHud(game.registry.get('caughtCount'));
 });

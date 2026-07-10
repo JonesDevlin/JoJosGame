@@ -99,6 +99,23 @@ body {
     z-index: 5;
 }
 
+#music-toggle {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 6px 10px;
+    background: rgba(20, 20, 50, 0.8);
+    border: 2px solid #ffd54f;
+    border-radius: 8px;
+    color: #ffd54f;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 5;
+}
+#music-toggle:hover {
+    background: rgba(30, 30, 70, 0.9);
+}
+
 #ending-ui {
     position: absolute;
     top: 50%;
