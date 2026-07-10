@@ -83,6 +83,41 @@ const Music = (() => {
         timerId = setInterval(scheduler, LOOKAHEAD_MS);
     }
 
+    // ---- Short synthesized sound effects (share the music's context and
+    // master gain, so the mute button silences them too). Safe no-ops until
+    // the first user gesture creates the context. ----
+    function playTone(freq, duration, wave, peak, delay = 0, slideTo = null) {
+        if (!ctx || !masterGain) return;
+        const t0 = ctx.currentTime + delay;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = wave;
+        osc.frequency.setValueAtTime(freq, t0);
+        if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, t0 + duration);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(peak, t0 + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(t0);
+        osc.stop(t0 + duration + 0.02);
+    }
+
+    const SFX = {
+        // Rising two-note chime for solving a puzzle
+        ding() { playTone(987.77, 0.12, 'triangle', 0.2); playTone(1318.51, 0.35, 'triangle', 0.2, 0.09); },
+        // Sad descending buzz for getting it wrong
+        wrong() { playTone(196, 0.28, 'square', 0.1); playTone(147, 0.35, 'square', 0.1, 0.12); },
+        // Electric zap: two detuned falling sawtooths
+        zap() { playTone(520, 0.2, 'sawtooth', 0.14, 0, 60); playTone(480, 0.2, 'sawtooth', 0.1, 0.02, 55); },
+        // Quick rising pop for bopping something
+        pop() { playTone(300, 0.1, 'square', 0.14, 0, 620); },
+        // Drum thump: fast falling sine like a kick
+        thump() { playTone(165, 0.18, 'sine', 0.3, 0, 55); },
+        // Tiny click for flipping a card
+        click() { playTone(700, 0.06, 'triangle', 0.12); }
+    };
+
     function unlock() {
         if (!ctx) {
             ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -128,6 +163,14 @@ const Music = (() => {
         },
         isMuted() {
             return muted;
+        },
+        // Play one pitched note (used by the Simon pads); no-op before unlock
+        tone(freq, duration = 0.25, wave = 'triangle', peak = 0.18) {
+            playTone(freq, duration, wave, peak);
+        },
+        // Play a named effect from the SFX table; no-op before unlock
+        sfx(name) {
+            if (SFX[name]) SFX[name]();
         }
     };
 })();

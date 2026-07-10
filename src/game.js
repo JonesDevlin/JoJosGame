@@ -846,7 +846,12 @@ function setupSequencePuzzle(title, options, pokemon) {
         return pad;
     });
 
+    // Classic Simon: every pad has its own note (C4 E4 G4 C5), played both
+    // during playback and when the player presses it
+    const padTones = [261.63, 329.63, 392.00, 523.25];
+
     function flashPad(pad) {
+        Music.tone(padTones[pads.indexOf(pad)], 0.3);
         pad.classList.add('lit');
         setTimeout(() => pad.classList.remove('lit'), 300);
     }
@@ -920,6 +925,7 @@ function setupTimingPuzzle(title, options, pokemon) {
                 running = false;
                 solvePuzzle(false);
             } else {
+                Music.sfx('wrong');
                 status.innerText = 'Missed! Tries left: ' + tries;
             }
         }
@@ -955,6 +961,7 @@ function setupMatchPuzzle(title, options, pokemon) {
         card.innerText = '?';
         card.onclick = () => {
             if (locked || card.classList.contains('revealed')) return;
+            Music.sfx('click');
             card.classList.add('revealed');
             card.innerText = symbol;
             flipped.push({ card, symbol });
@@ -1020,6 +1027,7 @@ function setupMazePuzzle(title, options, pokemon) {
 
     function resetSpark() {
         tracing = false;
+        Music.sfx('zap');
         grid.classList.add('zapped');
         setTimeout(() => grid.classList.remove('zapped'), 250);
         startCell.innerText = '⚡';
@@ -1121,6 +1129,7 @@ function setupWhackPuzzle(title, options, pokemon) {
             if (finished || !hole.classList.contains('up')) return;
             hole.classList.remove('up');
             hole.classList.add('bopped');
+            Music.sfx('pop');
             setTimeout(() => hole.classList.remove('bopped'), 200);
             hole.innerText = '💫';
             bops++;
@@ -1251,9 +1260,11 @@ function setupRhythmPuzzle(title, options, pokemon) {
         const t = performance.now() - activeRing.spawnedAt;
         if (Math.abs(t - perfectAt) <= tolerance) {
             hits++;
+            Music.sfx('thump');
             drum.classList.add('hit');
             timers.push(setTimeout(() => drum.classList.remove('hit'), 200));
         } else {
+            Music.sfx('wrong');
             drum.classList.add('missed');
             timers.push(setTimeout(() => drum.classList.remove('missed'), 200));
         }
@@ -1273,6 +1284,7 @@ function setupRhythmPuzzle(title, options, pokemon) {
 }
 
 function solvePuzzle(isCorrect) {
+    Music.sfx(isCorrect ? 'ding' : 'wrong');
     if (isCorrect) {
         currentPokemon.caught = true;
         currentPokemon.setAlpha(0.5); // Make it translucent to indicate it's caught
