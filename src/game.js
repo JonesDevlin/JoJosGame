@@ -285,9 +285,9 @@ class SchoolyardScene extends Phaser.Scene {
         const p4 = createNpc(this, 150, 300, 'pokemon4', 64, 28, 48, 16);
         const p5 = createNpc(this, 580, 430, 'pokemon5', 64, 28, 48, 16);
         const p6 = createNpc(this, 730, 270, 'pokemon6', 64, 28, 48, 16);
-        p4.name = 'Ruby-spark';
+        p4.name = 'Volt-spark';
         p5.name = 'Ruby-scale';
-        p6.name = 'Ruby-wing';
+        p6.name = 'Frost-wing';
         p4.puzzleType = 'maze';
         p5.puzzleType = 'whack';
         p6.puzzleType = 'rhythm';
@@ -556,9 +556,9 @@ function interactCoach() {
     const caughtCount = game.registry.get('caughtCount');
     if (!game.registry.get('coachIntro')) {
         game.registry.set('coachIntro', true);
-        showDialogue("Coach: Welcome to recess! Three ruby dragons are running wild out here — show me your Academy spirit and cheer them up!");
+        showDialogue("Coach: Welcome to recess! Three elemental dragons are running wild out here — show me your Academy spirit and cheer them up!");
     } else if (caughtCount < SCHOOLYARD_TOTAL) {
-        showDialogue("Coach: Keep that energy up! " + (SCHOOLYARD_TOTAL - caughtCount) + " ruby dragons still need cheering up.");
+        showDialogue("Coach: Keep that energy up! " + (SCHOOLYARD_TOTAL - caughtCount) + " elemental dragons still need cheering up.");
     } else {
         showDialogue("Coach: Outstanding hustle! Your Pokedex is complete — head out the school gate at the bottom of the yard!");
     }
