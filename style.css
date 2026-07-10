@@ -51,7 +51,8 @@ body {
 }
 
 #dialogue-close {
-    padding: 8px 16px;
+    padding: 10px 28px;
+    min-height: 44px;
     background-color: #4CAF50;
     color: white;
     border: none;
@@ -411,7 +412,8 @@ button.puzzle-btn:hover {
 
 #puzzle-close {
     margin-top: 15px;
-    padding: 8px 16px;
+    padding: 10px 24px;
+    min-height: 44px;
     background-color: #f44336;
     color: white;
     border: none;
@@ -442,6 +444,20 @@ button.puzzle-btn:hover {
 @media (orientation: portrait) and (pointer: coarse) {
     #rotate-hint {
         display: block;
+    }
+}
+
+/* Fingertip-sized tap targets on touch screens */
+@media (pointer: coarse) {
+    #music-toggle {
+        min-width: 44px;
+        min-height: 44px;
+    }
+    #dialogue-close,
+    #puzzle-close,
+    #ending-restart {
+        min-height: 48px;
+        font-size: 17px;
     }
 }
 

@@ -445,6 +445,11 @@ document.getElementById('puzzle-close').addEventListener('click', () => {
 document.getElementById('dialogue-close').addEventListener('click', () => {
     hideDialogue();
 });
+// Tapping anywhere on the dialogue box also dismisses it (parity with Space;
+// the OK button's click bubbles here too, which is a harmless double-hide)
+document.getElementById('dialogue-ui').addEventListener('click', () => {
+    hideDialogue();
+});
 document.getElementById('music-toggle').addEventListener('click', (e) => {
     const muted = Music.toggleMute();
     e.target.innerHTML = muted ? '&#128263;' : '&#128266;';
