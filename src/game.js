@@ -147,12 +147,12 @@ class ClassroomScene extends Phaser.Scene {
         bg.setDisplaySize(800, 600);
 
         // Create Teacher (standing at the front of the class, below the blackboard)
-        this.teacher = createNpc(this, 400, 234, 'teacher', 100, 46, 62, 20);
+        this.teacher = createNpc(this, 400, 205, 'teacher', 100, 46, 62, 20);
 
         // Create Pokemons
         const p1 = createNpc(this, 200, 400, 'pokemon1', 64, 28, 48, 16);
         const p2 = createNpc(this, 600, 400, 'pokemon2', 64, 28, 48, 16);
-        const p3 = createNpc(this, 400, 500, 'pokemon3', 64, 28, 48, 16);
+        const p3 = createNpc(this, 250, 550, 'pokemon3', 64, 28, 48, 16);
         p1.name = 'Bulba-plant';
         p2.name = 'Char-lizard';
         p3.name = 'Squirt-turtle';
@@ -177,7 +177,9 @@ class ClassroomScene extends Phaser.Scene {
         const deskCols = [141, 273, 399, 526, 654];
         const deskRows = [301, 395, 500];
         deskCols.forEach(x => deskRows.forEach(y => {
-            const desk = this.add.rectangle(x, y, 76, 48);
+            // Collision boxes are slimmer than the desk art so the aisles
+            // stay comfortably walkable, especially with the touch stick
+            const desk = this.add.rectangle(x, y, 60, 34);
             this.physics.add.existing(desk, true);
             obstacles.add(desk);
         }));
@@ -233,7 +235,7 @@ class ClassroomScene extends Phaser.Scene {
         if (overlayBlocking(this)) return;
 
         let hintTarget = null;
-        if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.teacher.x, this.teacher.y) < 80) {
+        if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.teacher.x, this.teacher.y) < 100) {
             hintTarget = this.teacher;
         }
         this.pokemons.forEach(p => {
@@ -247,7 +249,7 @@ class ClassroomScene extends Phaser.Scene {
 
         // Interaction with Spacebar
         if (Phaser.Input.Keyboard.JustDown(this.interactKey) || consumeVirtualInteract()) {
-            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.teacher.x, this.teacher.y) < 80) {
+            if (Phaser.Math.Distance.Between(this.player.x, this.player.y, this.teacher.x, this.teacher.y) < 100) {
                 interactTeacher();
             } else {
                 this.pokemons.forEach(p => {
@@ -474,31 +476,57 @@ document.getElementById('music-toggle').addEventListener('click', (e) => {
     }
 });
 
-// ---- Virtual touch controls (buttons live in index.html, shown via CSS on
-// coarse-pointer devices). Each button tracks its own pointer so holding a
-// direction while tapping A works (multi-touch). ----
+// ---- Virtual touch controls (elements live in index.html, shown via CSS on
+// coarse-pointer devices). The stick and the A button each track their own
+// pointer, so dragging to move while tapping A works (multi-touch). ----
 
-function bindDpadButton(id, dir) {
-    const btn = document.getElementById(id);
-    const press = (e) => {
-        e.preventDefault(); // no focus steal / synthetic mouse events
-        virtualInput[dir] = true;
-        btn.classList.add('pressed');
-    };
-    const release = () => {
-        virtualInput[dir] = false;
-        btn.classList.remove('pressed');
-    };
-    btn.addEventListener('pointerdown', press);
-    btn.addEventListener('pointerup', release);
-    btn.addEventListener('pointercancel', release);
-    btn.addEventListener('pointerleave', release);
-    btn.addEventListener('contextmenu', (e) => e.preventDefault()); // long-press
+// Compact drag-stick: press anywhere in the box and drag; the nub follows the
+// finger and the drag vector sets the movement flags (with a deadzone).
+const touchStick = document.getElementById('touch-stick');
+const stickNub = document.getElementById('stick-nub');
+const STICK_DEADZONE = 10; // px of drag before a direction engages
+const STICK_RANGE = 34;    // max px the nub travels from center
+let stickPointerId = null;
+
+function updateStick(e) {
+    const rect = touchStick.getBoundingClientRect();
+    let dx = e.clientX - (rect.left + rect.width / 2);
+    let dy = e.clientY - (rect.top + rect.height / 2);
+    const len = Math.hypot(dx, dy);
+    if (len > STICK_RANGE) {
+        dx = dx / len * STICK_RANGE;
+        dy = dy / len * STICK_RANGE;
+    }
+    stickNub.style.transform = `translate(${dx}px, ${dy}px)`;
+    virtualInput.left = dx < -STICK_DEADZONE;
+    virtualInput.right = dx > STICK_DEADZONE;
+    virtualInput.up = dy < -STICK_DEADZONE;
+    virtualInput.down = dy > STICK_DEADZONE;
 }
-bindDpadButton('dpad-up', 'up');
-bindDpadButton('dpad-down', 'down');
-bindDpadButton('dpad-left', 'left');
-bindDpadButton('dpad-right', 'right');
+
+function resetStick() {
+    stickPointerId = null;
+    touchStick.classList.remove('active');
+    stickNub.style.transform = '';
+    virtualInput.left = virtualInput.right = virtualInput.up = virtualInput.down = false;
+}
+
+touchStick.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); // no focus steal / synthetic mouse events
+    stickPointerId = e.pointerId;
+    touchStick.setPointerCapture(e.pointerId);
+    touchStick.classList.add('active');
+    updateStick(e);
+});
+touchStick.addEventListener('pointermove', (e) => {
+    if (e.pointerId === stickPointerId) updateStick(e);
+});
+['pointerup', 'pointercancel'].forEach(ev => {
+    touchStick.addEventListener(ev, (e) => {
+        if (e.pointerId === stickPointerId) resetStick();
+    });
+});
+touchStick.addEventListener('contextmenu', (e) => e.preventDefault()); // long-press
 
 const interactBtn = document.getElementById('touch-interact');
 interactBtn.addEventListener('pointerdown', (e) => {
